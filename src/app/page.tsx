@@ -1,13 +1,13 @@
-import { LoginForm } from "@/components/auth/LoginForm"
-
-export const metadata = {
-  title: 'Home'
-}
+'use client'
+import { useRouter } from "next/navigation"
+import { useEffect } from "react"
 
 function Home() {
-  return (
-    <LoginForm />
-  );
+  const router = useRouter()
+
+  useEffect(() => {
+    router.push('/dashboard')
+  }, [])
 }
 
 export default Home

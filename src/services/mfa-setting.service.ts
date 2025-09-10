@@ -1,0 +1,29 @@
+import { VerifyDeviceWithTOTP } from "@/types/request/verifydevicewithtotp.dto";
+import { AuthenticationDTO } from "@/types/response/auth.response.dto";
+import { MFASettingResponseDTO } from "@/types/response/mfasetting.response.dto";
+import { APIResponse } from "@/types/api";
+import { BASE_MFA_URL } from "../constants";
+import { configRequest } from "@/config/api/config.api";
+
+const BASE_URL = BASE_MFA_URL;
+
+class MfaSettingService {
+  async verifyDeviceWithToTP(verification: VerifyDeviceWithTOTP): Promise<AuthenticationDTO> {
+    const response = await configRequest.makeAuthenticatedRequest<AuthenticationDTO>(`${BASE_URL}/verify-totp`, {
+      method: 'POST',
+      body: JSON.stringify(verification),
+    });
+    return response.data;
+  }
+
+  async getMfaSettings(): Promise<APIResponse<MFASettingResponseDTO> | any> {
+    const response = await configRequest.makeAuthenticatedRequest<APIResponse<MFASettingResponseDTO>>(`${BASE_URL}`, {
+      method: 'GET',
+    });
+    return response;
+  }
+
+
+}
+
+export const mfaSettingService = new MfaSettingService();
