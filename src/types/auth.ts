@@ -8,14 +8,4 @@ export interface User {
   isLocked: boolean;
 }
 
-export interface AuthTokens {
-  token: string;
-  refreshToken: string;
-}
 
-export interface AuthState {
-  user: User | null;
-  tokens: AuthTokens | null;
-  isAuthenticated: boolean;
-  loading: boolean;
-}

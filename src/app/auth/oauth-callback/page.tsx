@@ -1,22 +1,34 @@
-/* eslint-disable react-hooks/exhaustive-deps */
+'use client'
 import React, { useEffect, useState } from 'react';
-import { useRouter } from 'next/router';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 import { GitHubOAuth } from '@/utils';
-import { authService } from '@/services/auth.service';
+import { authServices } from '@/services/auth.service';
+// import { authService } from '@/services/auth.service';
 
 export default function OAuthCallbackPage() {
     const router = useRouter();
     const [error, setError] = useState<string | null>(null);
     const [processing, setProcessing] = useState(true);
+    const [query, setQuery] = useState({});
+
+    useEffect(() => {
+        try {
+            const searchParams = new URLSearchParams(window.location.search);
+            const params = Object.fromEntries(searchParams.entries());
+            setQuery(params);
+        } catch (e) {
+            console.error("Error accessing URL search params:", e);
+        }
+    }, []);
 
     useEffect(() => {
         handleOAuthCallback();
-    }, [router.query]);
+    }, [query]);
 
     const handleOAuthCallback = async () => {
         try {
-            const { code, state, error: oauthError, provider } = router.query;
+            const { code, state, error: oauthError, provider } = query;
             const stateOriginal = localStorage.getItem('github_oauth_state');
 
             if (oauthError) {
@@ -54,7 +66,7 @@ export default function OAuthCallbackPage() {
 
         try {
             // Try sign-in first
-            const authResult = await authService.loginWithGithub(code);
+            const authResult = await authServices.authGithubSignIn(code)
             localStorage.setItem('accessToken', authResult.token);
             localStorage.setItem('refreshToken', authResult.refreshToken);
             document.cookie = `accessToken=${authResult.token}; Path=/; SameSite=Strict`;

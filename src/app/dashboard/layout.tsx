@@ -19,7 +19,6 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
 
     return (
         <div className="min-h-screen bg-gray-50 flex">
-
             <SideBar
                 navigation={navigation}
                 sidebarOpen={sidebarOpen}

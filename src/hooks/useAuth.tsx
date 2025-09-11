@@ -3,8 +3,10 @@ import { LoginRequestDTO, RegisterRequestDTO } from '@/types/request/auth.reques
 import { AccountResponseDTO } from '@/types/response/auth.response.dto';
 import { APIResponse } from '@/types/api';
 import { useState, useEffect, createContext, useContext } from 'react';
-import { accountService } from '@/services/account.service';
-import { authService } from '@/services/auth.service';
+import { accountServices } from '@/services/account.service';
+import { authServices } from '@/services/auth.service';
+// import { accountService } from '@/services/account.service';
+// import { authService } from '@/services/auth.service';
 
 const AuthContext = createContext<{
   user: AccountResponseDTO | null;
@@ -29,7 +31,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     const token = localStorage.getItem('accessToken');
     if (token) {
-      loadUser();
+      // loadUser();
     } else {
       setLoading(false);
     }
@@ -37,7 +39,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const loadUser = async () => {
     try {
-      const userData = await accountService.getAccountDetails();
+      const userData = await accountServices.getAccounts();
       console.log('Loaded user data:', userData);
       setUser({
         accountId: userData.accountId,
@@ -67,7 +69,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const login = async (credentials: LoginRequestDTO) => {
-    const response = await authService.login(credentials);
+    const response = await authServices.authLogIn(credentials);
     if (response.mfaRequired) {
       sessionStorage.setItem("pendingAuth", JSON.stringify(response));
       let url = '';
@@ -91,7 +93,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const register = async (userData: RegisterRequestDTO) => {
-    const response = await accountService.register(userData);
+    // const response = await accountService.register(userData);
+    const response = await accountServices.createAccount(userData)
+    console.log("check response", response)
+    // await new Promise(resolve => setTimeout(resolve, 100000))
     return response;
   };
 
@@ -103,7 +108,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, register, logout, loading }}>
+    <AuthContext.Provider value={{
+      user,
+      login,
+      register,
+      logout,
+      loading
+    }}>
       {children}
     </AuthContext.Provider>
   );

@@ -4,14 +4,12 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Input } from '../common/Input';
 import { Button } from '../common/Button';
-import { useApi } from '../../hooks/useApi';
 import { validateEmail } from '../../utils/validation.util';
 import { ForgotPasswordRequestDTO } from '../../types/request/auth.request.dto';
 import { authService } from '@/services/auth.service';
 
 export const ForgotPasswordForm: React.FC = () => {
   const router = useRouter();
-  const { loading, error, execute } = useApi();
   const [step, setStep] = useState<'request' | 'otp'>('request');
   const [otpSent, setOtpSent] = useState(false);
 
@@ -78,11 +76,9 @@ export const ForgotPasswordForm: React.FC = () => {
 
     if (!validateRequestForm()) return;
 
-    const success = await execute(async () => {
-      await authService.forgotPassword(formData);
-    });
+    const response: any = await authService.forgotPassword(formData);
 
-    if (success) {
+    if (response.success) {
       setStep('otp');
       setOtpSent(true);
     }
@@ -102,14 +98,13 @@ export const ForgotPasswordForm: React.FC = () => {
       return;
     }
 
-    const success = await execute(async () => {
-      await authService.resetPassword({
-        otp: otpValue,
-        newPassword
-      });
+    const response: any = await authService.resetPassword({
+      otp: otpValue,
+      newPassword
     });
 
-    if (success) {
+
+    if (response) {
       router.push('/auth/login?message=Password reset successful');
     }
   };
@@ -125,11 +120,11 @@ export const ForgotPasswordForm: React.FC = () => {
             </p>
           </div>
 
-          {error && (
+          {/* {error && (
             <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6">
               {error}
             </div>
-          )}
+          )} */}
 
           <form onSubmit={handleOtpSubmit} className="space-y-6">
             <div>
@@ -165,7 +160,7 @@ export const ForgotPasswordForm: React.FC = () => {
               required
             />
 
-            <Button type="submit" loading={loading}>
+            <Button type="submit" >
               Reset Password
             </Button>
           </form>
@@ -193,11 +188,11 @@ export const ForgotPasswordForm: React.FC = () => {
           </p>
         </div>
 
-        {error && (
+        {/* {error && (
           <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6">
             {error}
           </div>
-        )}
+        )} */}
 
         <form onSubmit={handleRequestSubmit} className="space-y-6">
           <Input
@@ -222,7 +217,7 @@ export const ForgotPasswordForm: React.FC = () => {
             required
           />
 
-          <Button type="submit" loading={loading}>
+          <Button type="submit">
             Send Reset Code
           </Button>
         </form>

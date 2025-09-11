@@ -1,20 +1,18 @@
 'use client'
 import React, { useState } from 'react';
-import { useRouter } from 'next/router';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Input } from '../common/Input';
-import { Button } from '../common/Button';
 import { SocialAuthButtons } from './SocialAuthButtons';
-import { useAuth } from '../../hooks/useAuth';
-import { useApi } from '../../hooks/useApi';
 import { validateEmail, validatePassword, validateUsername } from '../../utils/validation.util';
 import { RegisterRequestDTO } from '../../types/request/auth.request.dto';
+import { accountServices } from '@/services/account.service';
+import { Button } from '../common/Button';
 
 export const RegisterForm: React.FC = () => {
   const router = useRouter();
-  const { register } = useAuth();
-  const { loading, error, execute } = useApi();
-
+  // const { register } = useAuth();
+  const [isLoading, setIsLoading] = useState(false)
   const [formData, setFormData] = useState<RegisterRequestDTO>({
     fullName: '',
     username: '',
@@ -75,16 +73,25 @@ export const RegisterForm: React.FC = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (e: any) => {
+    try {
+      e.preventDefault();
+      setIsLoading(true)
+      console.log("Check validate: ", validateForm())
+      await new Promise(resolve => setTimeout(resolve, 3000))
+      // console.log('Registration result:', response);
+      if (!validateForm()) return;
 
-    if (!validateForm()) return;
+      const response = await accountServices.createAccount(formData)
+      console.log('Registration result:', response);
 
-    const response = await register(formData);
-
-    console.log('Registration result:', response);
-    if (response.success) {
-      router.push('/auth/login');
+      if (response.success) {
+        router.push('/auth/login');
+      }
+    } catch (error) {
+      console.error(error)
+    } finally {
+      setIsLoading(false)
     }
   };
 
@@ -96,13 +103,7 @@ export const RegisterForm: React.FC = () => {
           <p className="text-gray-600">Join us today!</p>
         </div>
 
-        {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6">
-            {error}
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={(e) => handleSubmit(e)} className="space-y-4 flex flex-col">
           <Input
             type="text"
             name="fullName"
@@ -178,9 +179,7 @@ export const RegisterForm: React.FC = () => {
             required
           />
 
-          <Button type="submit" loading={loading}>
-            Create Account
-          </Button>
+          <Button type='submit' loading={isLoading}>Create Account</Button>
         </form>
 
         <div className="mt-6">
@@ -195,7 +194,7 @@ export const RegisterForm: React.FC = () => {
         </div>
 
         <div className="mt-6">
-          <SocialAuthButtons mode="register" loading={loading} />
+          <SocialAuthButtons mode="register" loading={isLoading} />
         </div>
 
         <p className="mt-8 text-center text-sm text-gray-600">

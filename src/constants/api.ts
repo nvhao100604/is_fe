@@ -7,6 +7,8 @@ const BASE_LOGIN_ATTEMPTS_URL = '/login-attempts'
 const BASE_MFA_URL = '/mfa-settings'
 const BASE_TRUST_DEVICE_URL = '/trust-devices'
 const BASE_USER_URL = '/user'
+const DEFAULT_TIMEOUT = 8 * 1000
+const RESPONSE_DELAY = 2 * 1000
 
 export {
   API_BASE_URL,
@@ -16,5 +18,7 @@ export {
   BASE_LOGIN_ATTEMPTS_URL,
   BASE_MFA_URL,
   BASE_TRUST_DEVICE_URL,
-  BASE_USER_URL
+  BASE_USER_URL,
+  DEFAULT_TIMEOUT,
+  RESPONSE_DELAY
 }

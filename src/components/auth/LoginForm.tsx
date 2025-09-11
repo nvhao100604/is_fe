@@ -5,16 +5,14 @@ import Link from 'next/link';
 import { Input } from '../common/Input';
 import { Button } from '../common/Button';
 import { SocialAuthButtons } from './SocialAuthButtons';
-import { useAuth } from '../../hooks/useAuth';
-import { useApi } from '../../hooks/useApi';
 import { validatePassword } from '../../utils/validation.util';
 import { LoginRequestDTO } from '../../types/request/auth.request.dto';
+import { useAuth, useLogin } from '@/hooks/auth/auth.hooks';
 
 export const LoginForm: React.FC = () => {
   const router = useRouter();
-  const { login } = useAuth();
-  const { loading, error, execute } = useApi();
-
+  const auth = useAuth()
+  const login = useLogin()
   const [formData, setFormData] = useState<LoginRequestDTO>({
     username: '',
     password: '',
@@ -50,17 +48,16 @@ export const LoginForm: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
     if (!validateForm()) return;
+    login(formData)
+    // const result = await authServices.authLogIn(formData);
+    // console.log('Login result:', result);
 
-    const result: any = await execute(async () => await login(formData));
-    console.log('Login result:', result);
-
-    if (result && result.mfaRequired) {
-      router.push(result.url);
-    } else if (result) {
-      router.push('/dashboard');
-    }
+    // if (result && result.mfaRequired) {
+    //   router.push(result.url);
+    // } else if (result) {
+    //   router.push('/dashboard');
+    // }
   };
 
   return (
@@ -70,12 +67,6 @@ export const LoginForm: React.FC = () => {
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Welcome Back</h1>
           <p className="text-gray-600">Sign in to your account</p>
         </div>
-
-        {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6">
-            {error}
-          </div>
-        )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <Input
@@ -109,12 +100,8 @@ export const LoginForm: React.FC = () => {
               Forgot password?
             </Link>
           </div>
-
-          <Button type="submit" loading={loading}>
-            Sign In
-          </Button>
+          <Button type='submit' loading={auth.isLoading}>Sign In</Button>
         </form>
-
         <div className="mt-6">
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
@@ -127,7 +114,7 @@ export const LoginForm: React.FC = () => {
         </div>
 
         <div className="mt-6">
-          <SocialAuthButtons mode="login" loading={loading} isLogin={true} />
+          <SocialAuthButtons mode="login" isLogin={true} />
         </div>
 
         <p className="mt-8 text-center text-sm text-gray-600">
