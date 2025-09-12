@@ -62,7 +62,7 @@ export const OTPVerification: React.FC<OTPVerificationProps> = ({ email, onResen
       return;
     }
     const email = localStorage.getItem("verify_email") ?? ''
-    const verifyForm = { email: email, otp: otp }
+    const verifyForm = { email: email, otp: otp.toString().replace(/,/g, "") }
     const response = await mailServices.verifySignUp(verifyForm)
     localStorage.removeItem("verify_email")
     if (response.success) {
