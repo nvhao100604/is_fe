@@ -2,9 +2,9 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { Button } from '../common/Button';
-import { useApi } from '../../hooks/useApi';
 import { validateOTP } from '../../utils/validation.util';
-import { authService } from '@/services/auth.service';
+import { EmailVerification, mailServices } from '@/services/mail.services';
+import { TOASTIFY_ERROR, useToastify } from '@/store/Toastify';
 
 interface OTPVerificationProps {
   email?: string;
@@ -13,10 +13,12 @@ interface OTPVerificationProps {
 
 export const OTPVerification: React.FC<OTPVerificationProps> = ({ email, onResend }) => {
   const router = useRouter();
-  const { loading, error, execute } = useApi();
+  // const { loading, error, execute } = useApi();
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [timeLeft, setTimeLeft] = useState(300); // 5 minutes
   const [canResend, setCanResend] = useState(false);
+  const [isLoading, setIsLoading] = useState(false)
+  const toastify = useToastify()
 
   useEffect(() => {
     if (timeLeft > 0) {
@@ -59,13 +61,15 @@ export const OTPVerification: React.FC<OTPVerificationProps> = ({ email, onResen
     if (!validateOTP(otpValue)) {
       return;
     }
+    const email = localStorage.getItem("verify_email") ?? ''
+    const verifyForm = { email: email, otp: otp }
+    const response = await mailServices.verifySignUp(verifyForm)
 
-    const success = await execute(async () => {
-      await authService.verifyEmail(otpValue);
-    });
+    if (response.success) {
 
-    if (success) {
       router.push('/auth/login?message=Email verified successfully');
+    } else {
+      toastify.notify("Verification Error", TOASTIFY_ERROR)
     }
   };
 
@@ -100,12 +104,6 @@ export const OTPVerification: React.FC<OTPVerificationProps> = ({ email, onResen
           </p>
         </div>
 
-        {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6">
-            {error}
-          </div>
-        )}
-
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-3 text-center">
@@ -127,7 +125,7 @@ export const OTPVerification: React.FC<OTPVerificationProps> = ({ email, onResen
             </div>
           </div>
 
-          <Button type="submit" loading={loading} disabled={otp.join('').length !== 6}>
+          <Button type="submit" loading={isLoading} disabled={otp.join('').length !== 6}>
             Verify Email
           </Button>
         </form>

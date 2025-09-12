@@ -2,9 +2,8 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '../common/Button';
-import { useApi } from '../../hooks/useApi';
 import { validateOTP } from '../../utils/validation.util';
-import { mfaSettingService } from '@/services/mfa-setting.service';
+import { mfaSettingServices } from '@/services/mfa-setting.service';
 
 interface VerifyDeviceWithTOTP {
   username?: string;
@@ -16,10 +15,10 @@ interface VerifyDeviceWithTOTP {
 
 export const TOTPVerification = () => {
   const router = useRouter();
-  const { loading, error, execute } = useApi();
+  // const { loading, error, execute } = useApi();
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-
+  const [isLoading, setIsLoading] = useState(false)
 
   const pendingAuth: any = sessionStorage.getItem("pendingAuth");
   const parsedPendingAuth = pendingAuth ? JSON.parse(pendingAuth) : null;
@@ -68,7 +67,7 @@ export const TOTPVerification = () => {
     verification.totpVerificationDTO.code = otpValue;
     console.log('Verifying device with TOTP:', verification);
 
-    const response = await mfaSettingService.verifyDeviceWithToTP(verification);
+    const response = await mfaSettingServices.verifyTOTP(verification);
     if (response.mfaRequired) {
       setErrorMessage(response.message || 'Device verified failed');
     } else {
@@ -100,11 +99,11 @@ export const TOTPVerification = () => {
           </p>
         </div>
 
-        {error && (
+        {/* {error && (
           <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6">
             {error}
           </div>
-        )}
+        )} */}
 
         {errorMessage && (
           <div className="mb-3 p-3 bg-red-100 text-red-700 border border-red-300 rounded-lg flex justify-between items-center">
@@ -139,7 +138,7 @@ export const TOTPVerification = () => {
             </div>
           </div>
 
-          <Button type="submit" loading={loading} disabled={otp.join('').length !== 6}>
+          <Button type="submit" loading={isLoading} disabled={otp.join('').length !== 6}>
             Verify Device
           </Button>
         </form>

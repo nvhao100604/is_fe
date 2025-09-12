@@ -86,7 +86,9 @@ export const RegisterForm: React.FC = () => {
       console.log('Registration result:', response);
 
       if (response.success) {
-        router.push('/auth/login');
+        // console.log("check si")
+        localStorage.setItem("verify_email", response.data.accountEmail)
+        router.push('/auth/verify-otp');
       }
     } catch (error) {
       console.error(error)
