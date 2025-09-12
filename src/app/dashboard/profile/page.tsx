@@ -1,5 +1,6 @@
 import { Metadata } from "next";
-import UserProfilePage from "./profile.page"
+import ProtectedProvider from "@/components/providers/ProtectedProvider";
+import { UserProfile } from "@/components/dashboard/UserProfile";
 
 export const metadata: Metadata = {
     title: "User Profile | Information Security",
@@ -7,7 +8,9 @@ export const metadata: Metadata = {
 
 const Profile = () => {
     return (
-        <UserProfilePage />
+        <ProtectedProvider>
+            <UserProfile />
+        </ProtectedProvider>
     )
 }
 

@@ -1,8 +1,9 @@
 'use client'
 import { ACCESS_TOKEN_KEY, IS_AUTHENTICATED, REFRESH_TOKEN_KEY, USER_KEY } from '@/constants/storage_keys';
+import { accountServices } from '@/services/account.service';
 import { authServices } from '@/services/auth.service'
 import { LoginRequestDTO } from '@/types/request/auth.request.dto'
-import { UserDTO } from '@/types/response/user.response.dto';
+import { AccountResponseDTO, tempAccount } from '@/types/response/auth.response.dto';
 import { clearAllKey, getItemWithKey, setItemWithKey } from '@/utils';
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit'
 import type { PayloadAction } from '@reduxjs/toolkit'
@@ -13,7 +14,7 @@ export interface AuthTokens {
 }
 
 export interface AuthState {
-    user: UserDTO | null;
+    account: AccountResponseDTO;
     tokens: AuthTokens | null;
     isAuthenticated: boolean;
     isLoading: boolean;
@@ -21,7 +22,7 @@ export interface AuthState {
 }
 
 const initialState: AuthState = {
-    user: getItemWithKey(USER_KEY),
+    account: getItemWithKey(USER_KEY),
     tokens: null,
     isAuthenticated: getItemWithKey(IS_AUTHENTICATED),
     isLoading: false,
@@ -39,6 +40,7 @@ const login = createAsyncThunk(
                 setItemWithKey(IS_AUTHENTICATED, true)
                 setItemWithKey(ACCESS_TOKEN_KEY, response.data.token)
                 setItemWithKey(REFRESH_TOKEN_KEY, response.data.refreshToken)
+                document.cookie = `accessToken=${response.data.token}; Path=/; SameSite=Strict`
             }
         } catch (error) {
             if (error instanceof Error) {
@@ -53,7 +55,7 @@ const getCurrentUser = createAsyncThunk(
     'user/currentUser',
     async (_, { rejectWithValue }) => {
         try {
-            const response = await authServices.getCurrentUser()
+            const response = await accountServices.getAccounts()
             // console.log("check response: ", response)
             if (response.success) {
                 setItemWithKey("user_data", response.data)
@@ -74,12 +76,13 @@ const authSlice = createSlice({
     initialState,
     reducers: {
         logout: (state) => {
-            state.user = null
+            state.account = tempAccount
             state.isAuthenticated = false
             state.errors = null
             state.isLoading = false
             state.tokens = null
             clearAllKey()
+            document.cookie = 'accessToken=; Path=/; Max-Age=0';
         },
         incrementByAmount: (state, action: PayloadAction<number>) => {
         },
@@ -91,12 +94,12 @@ const authSlice = createSlice({
                 state.errors = null
             })
             .addCase(getCurrentUser.fulfilled, (state, action) => {
-                state.user = action.payload
+                state.account = action.payload
                 state.isLoading = false
                 state.errors = null
             })
             .addCase(getCurrentUser.rejected, (state, action) => {
-                state.user = null
+                state.account = tempAccount
                 state.isLoading = false
                 state.errors = action.payload
             })

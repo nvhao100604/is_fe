@@ -2,8 +2,8 @@
 export interface VerifyDeviceWithTOTP {
   username?: string;
   deviceId?: number;
-  totpVerificationDTO: {
+  totpVerificationDTO?: {
     code?: string;
-    
+    secretKey?: string
   }
 }

@@ -5,6 +5,8 @@
 // import { BASE_MFA_URL } from "../constants";
 // import { configRequest } from "@/config/api/config.api";
 
+import api from "@/config/axios"
+import { VerifyDeviceWithTOTP } from "@/types/request/VerifyDeviceWithTotp.dto"
 // const BASE_URL = BASE_MFA_URL;
 
 // class MfaSettingService {
@@ -27,3 +29,18 @@
 // }
 
 // export const mfaSettingService = new MfaSettingService();
+
+const verifyTOTP = async (request: VerifyDeviceWithTOTP): Promise<any> => {
+    const response = await api.post('/mfa-settings/verify-totp', request)
+    return response.data
+}
+
+const getMFASetting = async (): Promise<any> => {
+    const response = await api.get('/mfa-settings')
+    return response.data
+}
+
+export const mfaSettingServices = {
+    verifyTOTP,
+    getMFASetting
+}

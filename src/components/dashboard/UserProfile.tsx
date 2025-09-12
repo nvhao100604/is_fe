@@ -1,22 +1,16 @@
+'use client'
 import React, { useState } from 'react';
 import { Button } from '../common/Button';
-import { AccountResponseDTO } from '@/types/response/auth.response.dto';
+import { useAccount } from '../providers/ProtectedProvider';
 
-interface UserProfileProps {
-  user: AccountResponseDTO;
-}
-
-export const UserProfile: React.FC<UserProfileProps> = ({ user }) => {
+export const UserProfile = () => {
+  const user = useAccount()
   const [isEditing, setIsEditing] = useState(false);
   const [editData, setEditData] = useState({
-    fullName: user.user.userName,
-    phone: user.user.userPhone,
+    fullName: user.user?.userName,
+    phone: user.user?.userPhone,
     email: user.accountEmail
   });
-
-  const handleEdit = () => {
-    setIsEditing(true);
-  };
 
   const handleSave = () => {
     // TODO: Implement save functionality
@@ -26,8 +20,8 @@ export const UserProfile: React.FC<UserProfileProps> = ({ user }) => {
 
   const handleCancel = () => {
     setEditData({
-      fullName: user.user.userName,
-      phone: user.user.userPhone,
+      fullName: user.user?.userName,
+      phone: user.user?.userPhone,
       email: user.accountEmail
     });
     setIsEditing(false);
@@ -45,7 +39,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({ user }) => {
         {!isEditing && (
           <Button
             variant="secondary"
-            onClick={handleEdit}
+            onClick={() => setIsEditing(true)}
             className="text-sm px-4 py-2"
           >
             Edit
@@ -56,7 +50,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({ user }) => {
       <div className="space-y-4">
         <div className="flex items-center justify-center mb-6">
           <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-2xl font-bold">
-            {user.user.userName.charAt(0).toUpperCase()}
+            {user.user?.userName?.charAt(0).toUpperCase()}
           </div>
         </div>
 
@@ -73,7 +67,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({ user }) => {
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           ) : (
-            <p className="text-gray-900 bg-gray-50 px-3 py-2 rounded-lg">{user.user.userName}</p>
+            <p className="text-gray-900 bg-gray-50 px-3 py-2 rounded-lg">{user.user?.userName}</p>
           )}
         </div>
 
@@ -106,7 +100,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({ user }) => {
             Gender
           </label>
           <p className="text-gray-900 bg-gray-50 px-3 py-2 rounded-lg">
-            {user.user.userGender === 'MALE' ? 'Male' : user.user.userGender === 'FEMALE' ? 'Female' : 'Other'}
+            {user.user?.userGender === 'MALE' ? 'Male' : user.user?.userGender === 'FEMALE' ? 'Female' : 'Other'}
           </p>
         </div>
 

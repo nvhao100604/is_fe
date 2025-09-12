@@ -5,17 +5,7 @@ import { useEffect, useState } from "react";
 import { Doughnut, Line } from "react-chartjs-2";
 import { BsShieldFillCheck, BsShieldFillX } from "react-icons/bs";
 import { FiBarChart2, FiDownload, FiRefreshCw, FiSearch, FiSettings } from "react-icons/fi";
-import {
-    Chart as ChartJS,
-    ChartData,
-    CategoryScale,
-    LinearScale,
-    PointElement,
-    LineElement,
-    Title,
-    Tooltip,
-    Legend
-} from "chart.js/auto";
+import { Chart as ChartJS, ChartData, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend } from "chart.js/auto";
 import { useAuth, useLogout } from "@/hooks/auth/auth.hooks";
 
 ChartJS.register(
@@ -34,10 +24,12 @@ const TopNav = ({
     const auth = useAuth()
     const logout = useLogout()
     const router = useRouter()
+    const [isMounted, setIsMounted] = useState(false)
 
     useEffect(() => {
-        console.log("check auth: ", auth)
-    }, [JSON.stringify(auth)])
+        setIsMounted(true)
+    }, [])
+
     const handleLogout = () => {
         logout();
         router.push('/auth/login')
@@ -59,16 +51,19 @@ const TopNav = ({
                     <div className="relative">
                         <button className="flex items-center text-sm font-medium text-gray-700 hover:text-gray-900">
                             <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white font-semibold mr-2">
-                                {auth.isAuthenticated && auth.user?.userName?.charAt(0).toUpperCase() || 'U'}
+                                {auth.isAuthenticated && isMounted ?
+                                    auth.account?.user?.userName?.charAt(0).toUpperCase()
+                                    :
+                                    "U"}
                             </div>
-                            <span className="hidden md:block">{auth.isAuthenticated && auth.user?.userName}</span>
+                            <span className="hidden md:block">{auth.isAuthenticated && isMounted && auth.account?.user?.userName}</span>
                             <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                             </svg>
                         </button>
                     </div>
 
-                    {auth.isAuthenticated ?
+                    {(auth.isAuthenticated && isMounted) ?
                         <button
                             onClick={handleLogout}
                             className="px-4 py-2 text-sm font-medium text-white hover:bg-red-800 bg-red-600 rounded-lg transition-colors"
@@ -218,14 +213,6 @@ interface ChartDataType {
 }
 
 const SecurityDashboard: React.FC = () => {
-    const [isDarkMode, setIsDarkMode] = useState<boolean>(true);
-    const [loading, setLoading] = useState<boolean>(true);
-
-    useEffect(() => {
-        const timer = setTimeout(() => setLoading(false), 1500);
-        return () => clearTimeout(timer);
-    }, []);
-
     const securityMetrics: SecurityMetrics = {
         activeThreats: 12,
         blockedAttempts: 2453,
@@ -258,25 +245,11 @@ const SecurityDashboard: React.FC = () => {
         }]
     };
 
-    if (loading) {
-        return (
-            <div className="flex items-center justify-center min-h-screen bg-gray-900">
-                <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-blue-500"></div>
-            </div>
-        );
-    }
-
     return (
-        <div className={`min-h-screen ${isDarkMode ? "bg-gray-900 text-gray-100" : "bg-gray-50 text-gray-800"}`}>
+        <div className={`min-h-screen text-gray-800"}`}>
             <div className="container mx-auto px-4 py-8">
                 <div className="flex justify-between items-center mb-8">
                     <h1 className="text-3xl font-bold">Security Dashboard</h1>
-                    <button
-                        onClick={() => setIsDarkMode(!isDarkMode)}
-                        className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 transition-colors"
-                    >
-                        Toggle Theme
-                    </button>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -322,18 +295,18 @@ const SecurityDashboard: React.FC = () => {
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-                    <div className={isDarkMode ? "bg-gray-800 rounded-lg p-6 shadow-lg" : "bg-white rounded-lg p-6 shadow-lg"}>
+                    <div className={"bg-white rounded-lg p-6 shadow-lg"}>
                         <h3 className="text-xl font-bold mb-4">Network Traffic</h3>
                         <Line data={networkData} options={{ responsive: true }} />
                     </div>
 
-                    <div className={isDarkMode ? "bg-gray-800 rounded-lg p-6 shadow-lg" : "bg-white rounded-lg p-6 shadow-lg"}>
+                    <div className={"bg-white rounded-lg p-6 shadow-lg"}>
                         <h3 className="text-xl font-bold mb-4">Compliance Overview</h3>
                         <Doughnut data={complianceData} options={{ responsive: true }} />
                     </div>
                 </div>
 
-                <div className={isDarkMode ? "bg-gray-800 rounded-lg p-6 shadow-lg mb-8" : "bg-white rounded-lg p-6 shadow-lg mb-8"}>
+                <div className={"bg-white rounded-lg p-6 shadow-lg mb-8"}>
                     <h3 className="text-xl font-bold mb-4">Recent Security Incidents</h3>
                     <div className="space-y-4">
                         {recentIncidents.map(incident => (

@@ -6,7 +6,7 @@ import { Input } from '../common/Input';
 import { Button } from '../common/Button';
 import { validateEmail } from '../../utils/validation.util';
 import { ForgotPasswordRequestDTO } from '../../types/request/auth.request.dto';
-import { authService } from '@/services/auth.service';
+import { authServices } from '@/services/auth.service';
 
 export const ForgotPasswordForm: React.FC = () => {
   const router = useRouter();
@@ -76,7 +76,7 @@ export const ForgotPasswordForm: React.FC = () => {
 
     if (!validateRequestForm()) return;
 
-    const response: any = await authService.forgotPassword(formData);
+    const response: any = await authServices.forgotPassword(formData);
 
     if (response.success) {
       setStep('otp');

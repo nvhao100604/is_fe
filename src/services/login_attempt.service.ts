@@ -5,8 +5,11 @@
 // import { LoginAttemptDTO } from "@/types/response/login_attempt.response.dto";
 // import { configRequest } from "@/config/api/config.api";
 
-// const BASE_URL = BASE_LOGIN_ATTEMPTS_URL;
+import api from "@/config/axios"
+import { Query } from "@/types/api"
+import { QueryToParams } from "@/utils"
 
+// const BASE_URL = BASE_LOGIN_ATTEMPTS_URL;
 // class LoginAttemptService {
 
 //   async getLoginAttempts(): Promise<APIResponse<PageDTO<LoginAttemptDTO>> | any> {
@@ -37,3 +40,25 @@
 // }
 
 // export const loginAttemptService = new LoginAttemptService();
+
+const getLoginAttempts = async (): Promise<any> => {
+    const response = await api.get("/login-attempts")
+    return response.data
+}
+
+const getLoginAttemptsByDeviceId = async (deviceId: number): Promise<any> => {
+    const response = await api.get(`/login-attempts/trust-device/${deviceId}`)
+    return response.data
+}
+
+const getLoginAttemptsByFilter = async (query: Query): Promise<any> => {
+    const queryString = QueryToParams(query)
+    const response = await api.get(`/login-attempts/filter?${queryString}`)
+    return response.data
+}
+
+export const loginAttemptServices = {
+    getLoginAttempts,
+    getLoginAttemptsByDeviceId,
+    getLoginAttemptsByFilter
+}

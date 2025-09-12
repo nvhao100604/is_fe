@@ -27,7 +27,6 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
             {/* Main content */}
             <div className="flex-1 p-6">
                 <TopNav setSidebarOpen={() => setSidebarOpen(true)} />
-
                 {/* Page content */}
                 <main className="p-6">
                     {children}

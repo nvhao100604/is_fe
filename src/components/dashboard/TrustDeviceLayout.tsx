@@ -1,9 +1,8 @@
 'use client'
-import { TrustDeviceFilter } from "@/types/request/filters/TrustDeviceFilter";
 import { PageDTO } from "@/types/response/page.response.dto";
 import { TrustDeviceDTO } from "@/types/response/trust_device.response.dto";
-import { trustDeviceService } from "@/services/trust_device.serivce";
-import { APIResponse } from "@/types/api";
+import { trustDeviceServices } from "@/services/trust_device.serivce";
+import { APIResponse, defaultQuery, TrustDeviceQuery } from "@/types/api";
 import React, { useEffect, useState, useCallback } from "react";
 
 const trustDeviceServiceMockData = {
@@ -90,7 +89,7 @@ export default function TrustDevicesDashboard() {
   // State cho UI
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
-  const [filters, setFilters] = useState<TrustDeviceFilter>({});
+  const [filters, setFilters] = useState<TrustDeviceQuery>(defaultQuery);
   const [loading, setLoading] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");

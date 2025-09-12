@@ -1,6 +1,6 @@
 'use client'
+import { mfaSettingServices } from "@/services/mfa-setting.service";
 import { MFASettingResponseDTO } from "@/types/response/mfasetting.response.dto";
-import { mfaSettingService } from "@/services/mfa-setting.service";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 
@@ -11,24 +11,23 @@ const MfaSettingsPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    const loadMfaSettings = async () => {
+      try {
+        setLoading(true);
+        const response = await mfaSettingServices.getMFASetting();
+        if (response.success) {
+          setSettings(response.data);
+        } else {
+          setError(response.message);
+        }
+      } catch (err) {
+        setError('Failed to load MFA settings');
+      } finally {
+        setLoading(false);
+      }
+    };
     loadMfaSettings();
   }, []);
-
-  const loadMfaSettings = async () => {
-    try {
-      setLoading(true);
-      const response = await mfaSettingService.getMfaSettings();
-      if (response.success) {
-        setSettings(response.data);
-      } else {
-        setError(response.message);
-      }
-    } catch (err) {
-      setError('Failed to load MFA settings');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleToggleMfa = async () => {
     // TODO: Implement toggle MFA functionality

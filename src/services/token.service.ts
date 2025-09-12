@@ -2,6 +2,8 @@
 // import { BASE_TOKEN_URL } from "../constants";
 // import { configRequest } from "@/config/api/config.api";
 
+import api from "@/config/axios"
+
 // const BASE_URL = BASE_TOKEN_URL;
 
 // class TokenService {
@@ -15,3 +17,10 @@
 // }
 
 // export const tokenService = new TokenService()
+
+const refreshToken = async (refreshToken: string): Promise<any> => {
+    const response = await api.post("/tokens/refresh-token", refreshToken)
+    return response.data
+}
+
+export { refreshToken }

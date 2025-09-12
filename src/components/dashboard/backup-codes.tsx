@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { mfaSettingServices } from '@/services/mfa-setting.service';
 
 const BackupCodesPage: React.FC = () => {
   const router = useRouter();
@@ -10,24 +11,23 @@ const BackupCodesPage: React.FC = () => {
   const [downloaded, setDownloaded] = useState(false);
 
   useEffect(() => {
+    const loadBackupCodes = async () => {
+      // try {
+      //    setLoading(true);
+      //   const response = await mfaSettingServices.getBackupCodes();
+      //   if (response.success) {
+      //     setCodes(response.data);
+      //   } else {
+      //     setError(response.message);
+      //   } 
+      // } catch (err) {
+      //   setError('Failed to load backup codes');
+      // } finally {
+      //   setLoading(false);
+      // }
+    };
     loadBackupCodes();
   }, []);
-
-  const loadBackupCodes = async () => {
-    try {
-      /* setLoading(true);
-      const response = await mfaSettingService.getBackupCodes();
-      if (response.success) {
-        setCodes(response.data);
-      } else {
-        setError(response.message);
-      } */
-    } catch (err) {
-      setError('Failed to load backup codes');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleRegenerate = async () => {
     if (!confirm('Are you sure? This will invalidate all existing backup codes.')) {

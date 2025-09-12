@@ -1,5 +1,6 @@
 import { Metadata } from "next";
-import SettingsPage from "./setting.page"
+import ProtectedProvider from "@/components/providers/ProtectedProvider";
+import MfaSettingsPage from "@/components/dashboard";
 
 export const metadata: Metadata = {
     title: "Setting | Information Security",
@@ -7,7 +8,9 @@ export const metadata: Metadata = {
 
 const Setting = () => {
     return (
-        <SettingsPage />
+        <ProtectedProvider>
+            <MfaSettingsPage />
+        </ProtectedProvider>
     )
 }
 
