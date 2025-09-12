@@ -1,8 +1,8 @@
-import { TOTPVerification } from "@/components/auth/TOTPVerification"
+import { OTPVerification } from "@/components/auth/OTPVerification"
 
 const VerifyOTP = () => {
     return (
-        <TOTPVerification />
+        <OTPVerification />
     )
 }
 

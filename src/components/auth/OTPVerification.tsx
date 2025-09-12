@@ -1,6 +1,6 @@
 'use client'
 import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/router';
+import { useRouter } from 'next/navigation';
 import { Button } from '../common/Button';
 import { validateOTP } from '../../utils/validation.util';
 import { EmailVerification, mailServices } from '@/services/mail.services';
@@ -64,7 +64,7 @@ export const OTPVerification: React.FC<OTPVerificationProps> = ({ email, onResen
     const email = localStorage.getItem("verify_email") ?? ''
     const verifyForm = { email: email, otp: otp }
     const response = await mailServices.verifySignUp(verifyForm)
-
+    localStorage.removeItem("verify_email")
     if (response.success) {
 
       router.push('/auth/login?message=Email verified successfully');
