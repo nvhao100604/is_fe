@@ -67,9 +67,9 @@ import { QueryToParams } from "@/utils"
 // export const trustDeviceService = new TrustDeviceService();
 
 
-const getTrustDeviceByFilter = async (query: Query): Promise<any> => {
+const getTrustDeviceByFilter = async (query: Query, option?: object): Promise<any> => {
     const queryString = QueryToParams(query)
-    const response = await api.get(`/trust-devices?${queryString}`)
+    const response = await api.get(`/trust-devices?${queryString}`, option)
     return response.data
 }
 

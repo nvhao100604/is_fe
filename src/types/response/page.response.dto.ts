@@ -5,3 +5,11 @@ export interface PageDTO<T> {
   totalElements: number;
   totalPages: number;
 }
+
+export const tempData = {
+  content: [],
+  page: 0,
+  size: 0,
+  totalElements: 0,
+  totalPages: 0
+}

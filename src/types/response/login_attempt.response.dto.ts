@@ -8,5 +8,4 @@ export interface LoginAttemptDTO {
   attemptCreatedAt: string;
   trustDeviceName: string | null;
   trustDeviceIpAddress: string | null;
-
 }

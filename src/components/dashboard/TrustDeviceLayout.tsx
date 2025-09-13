@@ -1,169 +1,58 @@
 'use client'
-import { PageDTO } from "@/types/response/page.response.dto";
+import { PageDTO, tempData } from "@/types/response/page.response.dto";
 import { TrustDeviceDTO } from "@/types/response/trust_device.response.dto";
-import { trustDeviceServices } from "@/services/trust_device.serivce";
-import { APIResponse, defaultQuery, TrustDeviceQuery } from "@/types/api";
-import React, { useEffect, useState, useCallback } from "react";
-
-const trustDeviceServiceMockData = {
-  async filter(filter: TrustDeviceFilter, page: number, size: number): Promise<APIResponse<PageDTO<TrustDeviceDTO>>> {
-    // Mock data generator
-    const generateMockDevices = (): TrustDeviceDTO[] => {
-      const devices: TrustDeviceDTO[] = [];
-      const deviceNames = ["Chrome Browser", "Safari Mobile", "Firefox Desktop", "Edge Browser", "Android App"];
-      const locations = ["Ho Chi Minh City, VN", "Ha Noi, VN", "Da Nang, VN", "Can Tho, VN", "Singapore"];
-      const ips = ["192.168.1.1", "10.0.0.1", "172.16.0.1", "203.113.45.67", "45.77.189.23"];
-      const userAgents = [
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-        "Mozilla/5.0 (iPhone; CPU iPhone OS 14_6 like Mac OS X)",
-        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)",
-        "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36"
-      ];
-
-      for (let i = 1; i <= 30; i++) {
-        devices.push({
-          trustDeviceId: i,
-          trustDeviceName: deviceNames[Math.floor(Math.random() * deviceNames.length)] + ` #${i}`,
-          deviceIpAddress: ips[Math.floor(Math.random() * ips.length)],
-          deviceUserAgent: userAgents[Math.floor(Math.random() * userAgents.length)],
-          deviceLocation: locations[Math.floor(Math.random() * locations.length)],
-          deviceIsActive: Math.random() > 0.2,
-          deviceIsVerified: Math.random() > 0.3,
-          deviceCreatedAt: new Date(Date.now() - Math.random() * 90 * 24 * 60 * 60 * 1000).toISOString(),
-          deviceUpdatedAt: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toISOString(),
-        });
-      }
-      return devices;
-    };
-
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 500));
-
-    let devices = generateMockDevices();
-
-    // Apply filters
-    if (filter.deviceName) {
-      devices = devices.filter(d =>
-        d.trustDeviceName.toLowerCase().includes(filter.deviceName!.toLowerCase())
-      );
-    }
-    if (filter.deviceIsActive !== undefined) {
-      devices = devices.filter(d => d.deviceIsActive === filter.deviceIsActive);
-    }
-    if (filter.deviceIsVerified !== undefined) {
-      devices = devices.filter(d => d.deviceIsVerified === filter.deviceIsVerified);
-    }
-    if (filter.fromDate) {
-      devices = devices.filter(d => new Date(d.deviceCreatedAt) >= new Date(filter.fromDate!));
-    }
-    if (filter.toDate) {
-      devices = devices.filter(d => new Date(d.deviceCreatedAt) <= new Date(filter.toDate! + 'T23:59:59'));
-    }
-
-    // Pagination
-    const startIndex = page * size;
-    const endIndex = startIndex + size;
-    const paginatedDevices = devices.slice(startIndex, endIndex);
-
-    return {
-      success: true,
-      message: "Devices fetched successfully",
-      data: {
-        content: paginatedDevices,
-        page: page,
-        size: size,
-        totalElements: devices.length,
-        totalPages: Math.ceil(devices.length / size)
-      },
-      path: "/trust-devices/filter"
-    };
-  }
-};
+import { trustDeviceServices } from "@/services/trust_device.service";
+import { tempTrustDevice, TrustDeviceQuery } from "@/types/api";
+import React, { useEffect, useState } from "react";
+import { AttemptsPagination } from "./loginAttempts/loginAttempts.components";
+import { FormatDate } from "@/utils";
 
 export default function TrustDevicesDashboard() {
-  // State cho data từ API
-  const [devices, setDevices] = useState<TrustDeviceDTO[]>([]);
-  const [totalElements, setTotalElements] = useState(0);
-  const [totalPages, setTotalPages] = useState(0);
-
-  // State cho UI
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
-  const [filters, setFilters] = useState<TrustDeviceQuery>(defaultQuery);
+  const [data, setData] = useState<PageDTO<TrustDeviceDTO> | null>(null)
+  const [filters, setFilters] = useState<TrustDeviceQuery>(tempTrustDevice)
   const [loading, setLoading] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
+  const { content: devices, totalPages, totalElements } = data ?? tempData
   const [error, setError] = useState<string | null>(null);
-
   // Fetch data from API
-  const fetchTrustDevices = useCallback(async () => {
-    setLoading(true);
-    setError(null);
+  useEffect(() => {
+    applyFilter()
+  }, [])
 
+  const applyFilter = async () => {
     try {
-      console.log('Fetching devices with:', { filters, currentPage, pageSize, searchTerm });
-
-      // Tạo filter object với search term
-      const apiFilter: TrustDeviceFilter = {
-        ...filters,
-        deviceName: searchTerm.trim() || filters.deviceName,
-      };
-
-      const response: APIResponse<PageDTO<TrustDeviceDTO>> = await trustDeviceService.filter(
-        apiFilter,
-        currentPage - 1, // Backend thường dùng 0-indexed
-        pageSize
-      );
-
-      console.log('API Response:', response);
-
-      if (response.success && response.data) {
-        setDevices(response.data.content || []);
-        setTotalElements(response.data.totalElements || 0);
-        setTotalPages(response.data.totalPages || 0);
+      setLoading(true)
+      setError(null)
+      console.log("Check filters: ", filters)
+      const response = await trustDeviceServices.getTrustDeviceByFilter(filters, { responseDelay: 0 })
+      console.log(response)
+      if (response.success) {
+        setData(response.data)
       } else {
-        throw new Error(response.message || 'Failed to fetch devices');
+        setError(response.errors)
       }
-    } catch (err: any) {
-      console.error('Error fetching trust devices:', err);
-      setError(err.message || 'Failed to load trust devices');
-      setDevices([]);
-      setTotalElements(0);
-      setTotalPages(0);
+    } catch (error) {
+      setError((error as any).message)
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  }, [filters, currentPage, pageSize, searchTerm]);
+  }
 
-  // Fetch data on component mount and when dependencies change
-  useEffect(() => {
-    fetchTrustDevices();
-  }, [fetchTrustDevices]);
-
-  // Reset page when filters or search change
-  useEffect(() => {
-    if (currentPage !== 1) {
-      setCurrentPage(1);
-    }
-  }, [filters, searchTerm]);
-
-  const applyFilter = () => {
-    fetchTrustDevices();
-  };
-
-  const clearFilter = () => {
-    setFilters({});
-    setSearchTerm("");
-    setCurrentPage(1);
-  };
+  const handleChangeData = (e: any) => {
+    console.log("check type: ", e.target.type)
+    console.log("check value type: ", typeof e.target.value)
+    setFilters((prev) => ({
+      ...prev,
+      [e.target.name]: (e.target.type === "date") ? FormatDate(e.target.value) : e.target.value
+    }))
+  }
+  const clearFilter = () => setFilters(tempTrustDevice)
 
   const handlePageChange = (newPage: number) => {
-    setCurrentPage(newPage);
-  };
-
-  const handlePageSizeChange = (newSize: number) => {
-    setPageSize(newSize);
-    setCurrentPage(1);
+    setFilters((prev) => ({
+      ...prev,
+      page: newPage
+    }))
   };
 
   const getStatusBadge = (isActive: boolean, label: string) => {
@@ -179,35 +68,6 @@ export default function TrustDevicesDashboard() {
       </div>
     );
   };
-
-  const getPaginationButtons = () => {
-    const buttons = [];
-    const maxVisiblePages = 5;
-
-    let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
-    let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
-
-    if (endPage - startPage + 1 < maxVisiblePages) {
-      startPage = Math.max(1, endPage - maxVisiblePages + 1);
-    }
-
-    for (let i = startPage; i <= endPage; i++) {
-      buttons.push(
-        <button
-          key={i}
-          onClick={() => handlePageChange(i)}
-          className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${currentPage === i
-            ? 'bg-blue-600 text-white'
-            : 'bg-white text-gray-700 border hover:bg-gray-50'
-            }`}
-        >
-          {i}
-        </button>
-      );
-    }
-    return buttons;
-  };
-
   // Calculate statistics
   const activeDevices = devices.filter(d => d.deviceIsActive).length;
   const verifiedDevices = devices.filter(d => d.deviceIsVerified).length;
@@ -257,7 +117,7 @@ export default function TrustDevicesDashboard() {
               <span className="mr-2">⚠️</span>
               <span>{error}</span>
               <button
-                onClick={fetchTrustDevices}
+                onClick={applyFilter}
                 className="ml-auto bg-red-200 hover:bg-red-300 px-3 py-1 rounded text-sm"
               >
                 Retry
@@ -276,9 +136,10 @@ export default function TrustDevicesDashboard() {
               </div>
               <input
                 type="text"
+                name="deviceName"
                 placeholder="Search by device name..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                value={filters.deviceName ?? ""}
+                onChange={handleChangeData}
                 className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
               />
             </div>
@@ -292,7 +153,7 @@ export default function TrustDevicesDashboard() {
                 }`}
             >
               <span className="mr-2">🔧</span>
-              Filters
+              Query
             </button>
 
             {/* Refresh Button */}
@@ -316,13 +177,9 @@ export default function TrustDevicesDashboard() {
                     Device Status
                   </label>
                   <select
+                    name="deviceIsActive"
                     value={filters.deviceIsActive === undefined ? "" : String(filters.deviceIsActive)}
-                    onChange={(e) =>
-                      setFilters((prev) => ({
-                        ...prev,
-                        deviceIsActive: e.target.value === "" ? undefined : e.target.value === "true",
-                      }))
-                    }
+                    onChange={handleChangeData}
                     className="w-full border border-gray-200 rounded-lg p-3 focus:ring-2 focus:ring-green-500 focus:border-transparent"
                   >
                     <option value="">All Devices</option>
@@ -337,13 +194,9 @@ export default function TrustDevicesDashboard() {
                     Verification Status
                   </label>
                   <select
+                    name="deviceIsVerified"
                     value={filters.deviceIsVerified === undefined ? "" : String(filters.deviceIsVerified)}
-                    onChange={(e) =>
-                      setFilters((prev) => ({
-                        ...prev,
-                        deviceIsVerified: e.target.value === "" ? undefined : e.target.value === "true",
-                      }))
-                    }
+                    onChange={handleChangeData}
                     className="w-full border border-gray-200 rounded-lg p-3 focus:ring-2 focus:ring-green-500 focus:border-transparent"
                   >
                     <option value="">All Devices</option>
@@ -359,10 +212,9 @@ export default function TrustDevicesDashboard() {
                   </label>
                   <input
                     type="date"
-                    value={filters.fromDate || ""}
-                    onChange={(e) =>
-                      setFilters((prev) => ({ ...prev, fromDate: e.target.value }))
-                    }
+                    name="fromDate"
+                    value={filters.fromDate.toString() || ""}
+                    onChange={handleChangeData}
                     className="w-full border border-gray-200 rounded-lg p-3 focus:ring-2 focus:ring-green-500 focus:border-transparent"
                   />
                 </div>
@@ -373,11 +225,10 @@ export default function TrustDevicesDashboard() {
                     To Date
                   </label>
                   <input
+                    name="toDate"
                     type="date"
-                    value={filters.toDate || ""}
-                    onChange={(e) =>
-                      setFilters((prev) => ({ ...prev, toDate: e.target.value }))
-                    }
+                    value={filters.toDate.toString() || ""}
+                    onChange={handleChangeData}
                     className="w-full border border-gray-200 rounded-lg p-3 focus:ring-2 focus:ring-green-500 focus:border-transparent"
                   />
                 </div>
@@ -389,7 +240,7 @@ export default function TrustDevicesDashboard() {
                   disabled={loading}
                   className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
                 >
-                  Apply Filters
+                  Apply Query
                 </button>
                 <button
                   onClick={clearFilter}
@@ -407,13 +258,14 @@ export default function TrustDevicesDashboard() {
           {/* Table Header with Pagination Info */}
           <div className="px-6 py-4 border-b border-gray-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div className="text-sm text-gray-600">
-              Showing {devices.length > 0 ? ((currentPage - 1) * pageSize + 1) : 0}-{Math.min(currentPage * pageSize, totalElements)} of {totalElements} devices
+              Showing {devices.length > 0 ? ((filters.page - 1) * filters.size + 1) : 0}-{Math.min(filters.page * filters.size, totalElements)} of {totalElements} devices
             </div>
             <div className="flex items-center gap-2">
               <span className="text-sm text-gray-600">Show:</span>
               <select
-                value={pageSize}
-                onChange={(e) => handlePageSizeChange(Number(e.target.value))}
+                name="size"
+                value={filters.size}
+                onChange={handleChangeData}
                 className="border border-gray-200 rounded-md px-3 py-1 text-sm focus:ring-2 focus:ring-green-500"
               >
                 <option value={5}>5</option>
@@ -510,7 +362,7 @@ export default function TrustDevicesDashboard() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                         <div className="flex gap-2">
-                          <button
+                          {/* <button
                             className="text-blue-600 hover:text-blue-900 bg-blue-50 hover:bg-blue-100 px-2 py-1 rounded text-xs"
                             title="View Details"
                           >
@@ -527,7 +379,7 @@ export default function TrustDevicesDashboard() {
                             title={device.deviceIsVerified ? "Unverify" : "Verify"}
                           >
                             {device.deviceIsVerified ? "🔓" : "🔒"}
-                          </button>
+                          </button> */}
                           <button
                             className="text-red-600 hover:text-red-900 bg-red-50 hover:bg-red-100 px-2 py-1 rounded text-xs"
                             title="Delete Device"
@@ -543,34 +395,12 @@ export default function TrustDevicesDashboard() {
             </table>
           </div>
 
-          {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
-                  disabled={currentPage === 1 || loading}
-                  className="px-3 py-1 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Previous
-                </button>
-              </div>
-
-              <div className="flex items-center gap-1">
-                {getPaginationButtons()}
-              </div>
-
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
-                  disabled={currentPage === totalPages || loading}
-                  className="px-3 py-1 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Next
-                </button>
-              </div>
-            </div>
-          )}
+          <AttemptsPagination
+            loading={loading}
+            currentPage={filters.page}
+            totalPages={totalPages}
+            handlePageChange={handlePageChange}
+          />
         </div>
       </div>
     </div>

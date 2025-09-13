@@ -51,9 +51,9 @@ const getLoginAttemptsByDeviceId = async (deviceId: number): Promise<any> => {
     return response.data
 }
 
-const getLoginAttemptsByFilter = async (query: Query): Promise<any> => {
+const getLoginAttemptsByFilter = async (query: Query, option?: object): Promise<any> => {
     const queryString = QueryToParams(query)
-    const response = await api.get(`/login-attempts/filter?${queryString}`)
+    const response = await api.get(`/login-attempts/filter?${queryString}`, option)
     return response.data
 }
 

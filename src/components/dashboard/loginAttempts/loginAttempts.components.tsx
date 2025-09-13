@@ -1,5 +1,6 @@
 import { LoginAttemptQuery } from "@/types/api";
 import { LoginAttemptDTO } from "@/types/response/login_attempt.response.dto";
+import { useEffect } from "react";
 
 const Header = ({ totalElements, successRate }: { totalElements: number, successRate: () => number }) => {
     return (
@@ -34,7 +35,9 @@ const AttemptsTable = ({
     loading,
     attempts
 }: { loading: boolean, attempts: LoginAttemptDTO[] }) => {
-
+    useEffect(() => {
+        console.log("check attempts: ", attempts)
+    }, [])
     const getStatusBadge = (success: boolean) => {
         return success ? (
             <div className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
@@ -168,6 +171,7 @@ const TableHeader = ({
             <div className="flex items-center gap-2">
                 <span className="text-sm text-gray-600">Show:</span>
                 <select
+                    name="size"
                     value={pageSize}
                     onChange={handlePageSizeChange}
                     className="border border-gray-200 rounded-md px-3 py-1 text-sm focus:ring-2 focus:ring-blue-500"

@@ -1,94 +1,59 @@
 'use client'
 import React, { useEffect, useState, useCallback } from "react";
 import { LoginAttemptDTO } from "@/types/response/login_attempt.response.dto";
-import { PageDTO } from "@/types/response/page.response.dto";
-import { APIResponse, defaultQuery, LoginAttemptQuery } from "@/types/api";
-import { AttemptsPagination, AttemptsSearch, AttemptsTable, ErrorDisplay, FilterControl, FilterPanel, Header, TableHeader } from "./loginAttempts.components";
+import { PageDTO, tempData } from "@/types/response/page.response.dto";
+import { LoginAttemptQuery, tempLoginAttempts } from "@/types/api";
+import { AttemptsPagination, AttemptsTable, ErrorDisplay, FilterControl, FilterPanel, Header, TableHeader } from "./loginAttempts.components";
+import { loginAttemptServices } from "@/services/login_attempt.service";
+import { FormatDate } from "@/utils";
 
 function LoginAttemptsDashboard() {
-  const [attempts, setAttempts] = useState<LoginAttemptDTO[]>([]);
-  const [totalElements, setTotalElements] = useState(0);
-  const [totalPages, setTotalPages] = useState(0);
-  // State cho UI
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
-  const [filters, setFilters] = useState<LoginAttemptQuery>(defaultQuery);
+  const [data, setData] = useState<PageDTO<LoginAttemptDTO> | null>(null)
+  const [filters, setFilters] = useState<LoginAttemptQuery>(tempLoginAttempts)
   const [loading, setLoading] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
+  const { content: attempts, totalPages, totalElements } = data ?? tempData
   const [error, setError] = useState<string | null>(null);
-
   // Fetch data from API
-  const fetchLoginAttempts = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    // try {
-    //   console.log('Fetching data with:', { filters, currentPage, pageSize, searchTerm });
+  useEffect(() => {
+    applyFilter()
+  }, [filters])
 
-    //   // Tạo filter object với search term
-    //   const apiFilter: LoginAttemptFilter = {
-    //     ...filters,
-    //     // Nếu có search term, có thể thêm logic search ở đây
-    //     // Hoặc để backend handle search through existing filters
-    //   };
+  const applyFilter = async () => {
+    try {
+      setLoading(true)
+      setError(null)
+      const response = await loginAttemptServices.getLoginAttemptsByFilter(filters, { responseDelay: 0 })
+      console.log(response)
+      if (response.success) {
+        setData(response.data)
+      } else {
+        setError(response.errors)
+      }
+    } catch (error) {
+      setError(error as any)
+    } finally {
+      setLoading(false)
+    }
+  }
 
-    //   const response: APIResponse<PageDTO<LoginAttemptDTO>> = await loginAttemptService.filter(
-    //     apiFilter,
-    //     currentPage - 1, // Backend thường dùng 0-indexed
-    //     pageSize
-    //   );
 
-
-    //   if (response.success && response.data.content) {
-    //     let filteredData = response.data.content || [];
-
-    //     // Client-side search filter nếu backend không support
-    //     if (searchTerm.trim()) {
-    //       filteredData = filteredData.filter(attempt =>
-    //         attempt.attemptIpAddress.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    //         (attempt.trustDeviceName && attempt.trustDeviceName.toLowerCase().includes(searchTerm.toLowerCase())) ||
-    //         (attempt.attemptFailureReason && attempt.attemptFailureReason.toLowerCase().includes(searchTerm.toLowerCase()))
-    //       );
-    //     }
-
-    //     setAttempts(filteredData);
-    //     setTotalElements(response.data.totalElements || 0);
-    //     setTotalPages(response.data.totalPages || 0);
-    //   } else {
-    //     throw new Error(response.message || 'Failed to fetch data');
-    //   }
-    // } catch (err: any) {
-    //   console.error('Error fetching login attempts:', err);
-    //   setError(err.message || 'Failed to load login attempts');
-    //   setAttempts([]);
-    //   setTotalElements(0);
-    //   setTotalPages(0);
-    // } finally {
-    //   setLoading(false);
-    // }
-  }, [currentPage, pageSize, searchTerm]);
-
-  const applyFilter = () => {
-    fetchLoginAttempts();
-  };
-
-  const clearFilter = () => {
-    // setFilters({});
-    setSearchTerm("");
-    setCurrentPage(1);
-  };
+  const handleChangeData = (e: any) => {
+    console.log("check type: ", e.target.type)
+    setFilters((prev) => ({
+      ...prev,
+      [e.target.name]: (e.target.type === "date") ? FormatDate(e.target.value) : e.target.value
+    }))
+  }
+  const clearFilter = () => setFilters(tempLoginAttempts)
 
   const handlePageChange = (newPage: number) => {
-    setCurrentPage(newPage);
+    setFilters((prev) => ({
+      ...prev,
+      page: newPage
+    }))
   };
 
-  const handlePageSizeChange = (newSize: number) => {
-    setPageSize(newSize);
-    setCurrentPage(1);
-  };
-  const handleFilterChange = (e: any) => {
-
-  }
   // Calculate success rate
   const successRate = useCallback(() => {
     return attempts.length > 0
@@ -103,13 +68,13 @@ function LoginAttemptsDashboard() {
         {error &&
           <ErrorDisplay
             error={error}
-            fetchLoginAttempts={fetchLoginAttempts}
+            fetchLoginAttempts={applyFilter}
           />}
         <div className="bg-white rounded-xl shadow-sm border mb-6 p-6">
           <div className="flex flex-col lg:flex-row gap-4">
-            <AttemptsSearch searchTerm={searchTerm}
-              setSearchTerm={(e) => setSearchTerm(e.target.value)}
-            />
+            {/* <AttemptsSearch searchTerm={filters.}
+              setSearchTerm={ }
+            /> */}
             <FilterControl
               showFilters={showFilters}
               setShowFilters={() => setShowFilters(!showFilters)}
@@ -121,7 +86,7 @@ function LoginAttemptsDashboard() {
             filters={filters}
             loading={loading}
             showFilters={showFilters}
-            handleChange={handleFilterChange}
+            handleChange={handleChangeData}
             applyFilter={applyFilter}
             clearFilter={clearFilter}
           />
@@ -130,10 +95,10 @@ function LoginAttemptsDashboard() {
         <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
           <TableHeader
             attempts={attempts}
-            currentPage={currentPage}
-            pageSize={pageSize}
+            currentPage={filters.page}
+            pageSize={filters.size}
             totalElements={totalElements}
-            handlePageSizeChange={(e) => handlePageSizeChange(Number(e.target.value))}
+            handlePageSizeChange={handlePageChange}
           />
           <AttemptsTable
             attempts={attempts}
@@ -141,7 +106,7 @@ function LoginAttemptsDashboard() {
           />
           <AttemptsPagination
             loading={loading}
-            currentPage={currentPage}
+            currentPage={filters.page}
             totalPages={totalPages}
             handlePageChange={handlePageChange}
           />

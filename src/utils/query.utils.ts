@@ -4,7 +4,7 @@ const handleQuery = (query: Query) => {
     const newQuery = query;
     Object.keys(newQuery).forEach(key => {
         const element = newQuery[key];
-        if (element === '' || element === null || element === undefined) {
+        if (element === null) {
             delete newQuery[key];
         }
     })
