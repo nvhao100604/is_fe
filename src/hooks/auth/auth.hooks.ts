@@ -1,6 +1,6 @@
 'use client'
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
-import { getCurrentUser, getMFASettings, login, logout } from "@/redux/slices/authSlices";
+import { getCurrentUser, getMFASettings, login, logout, updateMFASettings } from "@/redux/slices/authSlices";
 import { TOASTIFY_ERROR, TOASTIFY_SUCCESS, useToastify } from "@/store/Toastify";
 import { LoginRequestDTO } from "@/types/request/auth.request.dto";
 import { useRouter } from "next/navigation";
@@ -56,24 +56,34 @@ const useLogout = () => {
     return logOut
 }
 
-const useGetMFASettings = () => {
+const useGetMFASettings = (option?: object) => {
     const mfaSetting = useAppSelector(state => state.auth.mfaSettings)
     const isLoading = useAppSelector(state => state.auth.isLoading)
     const errors = useAppSelector(state => state.auth.errors)
 
-
     const dispatch = useAppDispatch()
     useEffect(() => {
         if (!mfaSetting) {
-            dispatch(getMFASettings())
+            dispatch(getMFASettings({ option }))
             console.log("Fetching MFA Settings...")
         }
-    }, [])
+    }, [mfaSetting])
 
     return { mfaSetting, isLoading, errors }
 }
 
 const useMFASettings = () => useAppSelector(state => state.auth.mfaSettings)
+
+const useUpdateMFASettings = () => {
+    const dispatch = useAppDispatch()
+    const toastify = useToastify()
+
+    const updateMFA = async ({ mfaId, data, option }: { mfaId: number, data: object, option?: object }) => {
+        dispatch(updateMFASettings({ mfaId, data, option }))
+        toastify.notify("Updating MFA Settings successfully!", TOASTIFY_SUCCESS)
+    }
+    return updateMFA
+}
 
 export {
     useAuth,
@@ -81,5 +91,6 @@ export {
     useMFASettings,
     useLogin,
     useLogout,
-    useGetMFASettings
+    useGetMFASettings,
+    useUpdateMFASettings
 }

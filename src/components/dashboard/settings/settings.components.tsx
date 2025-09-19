@@ -4,10 +4,11 @@ import { ReactNode } from "react";
 
 
 interface MethodBoxProps {
-    mfaSetting: MFASettingResponseDTO;
+    mfaSetting: MFASettingResponseDTO | null;
     href: string;
     children: ReactNode,
     label: string,
+    description: string,
     handleClick: () => void;
     handleDisable: () => void;
 }
@@ -15,6 +16,7 @@ interface MethodBoxProps {
 const MethodBox = ({ mfaSetting,
     href,
     label,
+    description,
     children,
     handleClick,
     handleDisable
@@ -31,12 +33,12 @@ const MethodBox = ({ mfaSetting,
                     <div className="ml-4">
                         <h4 className="text-sm font-medium text-gray-900">{label}</h4>
                         <p className="text-sm text-gray-600">
-                            {mfaSetting.mfaTotpEnable ? 'Enabled' : 'Use an app like Google Authenticator or Authy'}
+                            {mfaSetting && mfaSetting.mfaTotpEnable ? 'Enabled' : description}
                         </p>
                     </div>
                 </div>
                 <div>
-                    {mfaSetting.mfaTotpEnable ? (
+                    {(mfaSetting && mfaSetting.mfaTotpEnable) ? (
                         <button
                             onClick={handleClick}
                             className="text-sm text-red-600 hover:text-red-800"

@@ -35,12 +35,19 @@ const verifyTOTP = async (request: VerifyDeviceWithTOTP): Promise<any> => {
     return response.data
 }
 
-const getMFASetting = async (): Promise<any> => {
-    const response = await api.get('/mfa-settings')
+const getMFASetting = async (option?: object): Promise<any> => {
+    const response = await api.get('/mfa-settings', option)
+    return response.data
+}
+
+const updateMFASetting = async (mfaId: number, data: object, option?: object) => {
+    const response = await api.patch(`/mfa-settings?mfaId=${mfaId}`, data, option)
+    // console.log(response);
     return response.data
 }
 
 export const mfaSettingServices = {
     verifyTOTP,
-    getMFASetting
+    getMFASetting,
+    updateMFASetting
 }

@@ -77,13 +77,30 @@ const getCurrentUser = createAsyncThunk(
 
 const getMFASettings = createAsyncThunk(
     'user/mfaSettings',
-    async (_, { rejectWithValue }) => {
+    async ({ option }: { option?: object }, { rejectWithValue }) => {
         try {
-            const response = await mfaSettingServices.getMFASetting()
+            const response = await mfaSettingServices.getMFASetting(option)
             console.log("MFA Settings fetched: ", response.data)
             if (response.success) {
                 setItemWithKey(MFA_SETTINGS_KEY, response.data)
                 // await new Promise(resolve => setTimeout(resolve, 1500))
+                return response.data
+            } else return response.message
+        } catch (error) {
+            if (error instanceof Error) {
+                return rejectWithValue(error.message);
+            }
+            return rejectWithValue("An unknown error occurred");
+        }
+    })
+
+const updateMFASettings = createAsyncThunk(
+    'user/updateMfaSettings',
+    async ({ mfaId, data, option }: { mfaId: number, data: object, option?: object }, { rejectWithValue }) => {
+        try {
+            const response = await mfaSettingServices.updateMFASetting(mfaId, data, option)
+            if (response.success) {
+                // console.log("MFA Settings updated: ", response);
                 return response.data
             } else return response.message
         } catch (error) {
@@ -155,10 +172,20 @@ const authSlice = createSlice({
                 state.isLoading = false
                 state.errors = action.payload
             })
+            .addCase(updateMFASettings.pending, (state) => {
+                state.errors = null
+            })
+            .addCase(updateMFASettings.fulfilled, (state, action: PayloadAction<MFASettingResponseDTO>) => {
+                state.mfaSettings = action.payload
+                state.errors = null
+            })
+            .addCase(updateMFASettings.rejected, (state, action) => {
+                state.errors = action.payload
+            })
     }
 })
 
 // Action creators are generated for each case reducer function
-export { login, getCurrentUser, getMFASettings, }
+export { login, getCurrentUser, getMFASettings, updateMFASettings, }
 export const { logout, incrementByAmount } = authSlice.actions
 export default authSlice.reducer

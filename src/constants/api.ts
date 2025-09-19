@@ -7,7 +7,7 @@ const BASE_LOGIN_ATTEMPTS_URL = '/login-attempts'
 const BASE_MFA_URL = '/mfa-settings'
 const BASE_TRUST_DEVICE_URL = '/trust-devices'
 const BASE_USER_URL = '/user'
-const DEFAULT_TIMEOUT = 8 * 1000
+const DEFAULT_TIMEOUT = 8 * 100000
 const RESPONSE_DELAY = 2 * 1000
 
 export {
