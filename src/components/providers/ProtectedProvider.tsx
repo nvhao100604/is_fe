@@ -1,7 +1,7 @@
 'use client'
-import { createContext, ReactNode, useContext, useEffect, useRef, useState } from 'react';
+import { createContext, ReactNode, useContext } from 'react';
 import { LoadingSpinner } from '../common/LoadingSpinner';
-import { useAuth } from '@/hooks/auth/auth.hooks';
+import { useAuthAccount } from '@/hooks/auth/auth.hooks';
 import { AccountResponseDTO, tempAccount } from '@/types/response/auth.response.dto';
 
 const ProtectedContext = createContext<AccountResponseDTO>(tempAccount)
@@ -9,22 +9,13 @@ const ProtectedContext = createContext<AccountResponseDTO>(tempAccount)
 const useAccount = () => useContext(ProtectedContext)
 
 const ProtectedProvider = ({ children }: { children: ReactNode }) => {
-    const { account, isLoading } = useAuth()
-    const [isMounted, setIsMounted] = useState(false)
+    const auth = useAuthAccount()
 
-    useEffect(() => {
-        setIsMounted(true)
-    }, [])
-
-    const delay = async () => {
-        await new Promise(resolve => setTimeout(resolve, 2000))
-    }
-    if (isLoading) {
-        delay()
+    if (auth.isLoading && typeof window !== 'undefined') {
         return <LoadingSpinner />
     }
 
-    if (!account && isMounted) {
+    if (!auth.isAuthenticated && typeof window !== 'undefined') {
         return (
             <div className="min-h-screen flex items-center justify-center">
                 <div className="text-center">
@@ -36,9 +27,13 @@ const ProtectedProvider = ({ children }: { children: ReactNode }) => {
     }
 
     return (
-        <ProtectedContext.Provider value={account}>
-            {children}
-        </ProtectedContext.Provider>
+        <>
+            {auth.account &&
+                <ProtectedContext.Provider value={auth.account}>
+                    {children}
+                </ProtectedContext.Provider>
+            }
+        </>
     )
 }
 

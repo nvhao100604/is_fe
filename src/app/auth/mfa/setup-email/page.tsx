@@ -1,4 +1,4 @@
-import SetupEmailPage from "@/components/dashboard/setup-email";
+import SetupEmailPage from "@/components/dashboard/settings/setup-email";
 
 function SetupEmail() {
     return (

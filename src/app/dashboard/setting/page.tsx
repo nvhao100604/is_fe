@@ -1,6 +1,6 @@
 import { Metadata } from "next";
 import ProtectedProvider from "@/components/providers/ProtectedProvider";
-import MfaSettingsPage from "@/components/dashboard";
+import MfaSettingsPage from "@/components/dashboard/settings";
 
 export const metadata: Metadata = {
     title: "Setting | Information Security",

@@ -1,4 +1,4 @@
-import SetupTotpPage from "@/components/dashboard/setup-totp";
+import SetupTotpPage from "@/components/dashboard/settings/setup-totp";
 
 function SetupTOTPPage() {
     return (

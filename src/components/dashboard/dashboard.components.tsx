@@ -105,7 +105,7 @@ const SideBar = ({
             {/* Mobile sidebar overlay */}
             {sidebarOpen && (
                 <div className="fixed inset-0 z-40 lg:hidden">
-                    <div className="fixed inset-0 bg-gray-600 bg-opacity-75" onClick={setSidebarOpen} />
+                    <div className="fixed inset-0 bg-gray-600/50" onClick={setSidebarOpen} />
                 </div>
             )}
 
@@ -212,7 +212,7 @@ interface ChartDataType {
     datasets: ChartDataset[];
 }
 
-const SecurityDashboard: React.FC = () => {
+const SecurityDashboard = () => {
     const securityMetrics: SecurityMetrics = {
         activeThreats: 12,
         blockedAttempts: 2453,

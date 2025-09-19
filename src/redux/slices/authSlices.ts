@@ -1,9 +1,11 @@
 'use client'
-import { ACCESS_TOKEN_KEY, IS_AUTHENTICATED, REFRESH_TOKEN_KEY, USER_KEY } from '@/constants/storage_keys';
+import { ACCESS_TOKEN_KEY, IS_AUTHENTICATED, MFA_SETTINGS_KEY, REFRESH_TOKEN_KEY, USER_KEY } from '@/constants/storage_keys';
 import { accountServices } from '@/services/account.service';
 import { authServices } from '@/services/auth.service'
+import { mfaSettingServices } from '@/services/mfa-setting.service';
 import { LoginRequestDTO } from '@/types/request/auth.request.dto'
 import { AccountResponseDTO, tempAccount } from '@/types/response/auth.response.dto';
+import { MFASettingResponseDTO } from '@/types/response/mfasetting.response.dto';
 import { clearAllKey, getItemWithKey, setItemWithKey } from '@/utils';
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit'
 import type { PayloadAction } from '@reduxjs/toolkit'
@@ -18,15 +20,17 @@ export interface AuthState {
     tokens: AuthTokens | null;
     isAuthenticated: boolean;
     isLoading: boolean;
-    errors: any
+    errors: any,
+    mfaSettings: MFASettingResponseDTO | null
 }
 
 const initialState: AuthState = {
-    account: getItemWithKey(USER_KEY),
+    account: getItemWithKey(USER_KEY) || tempAccount,
     tokens: null,
     isAuthenticated: getItemWithKey(IS_AUTHENTICATED),
     isLoading: false,
-    errors: null
+    errors: null,
+    mfaSettings: null
 }
 
 const login = createAsyncThunk(
@@ -58,7 +62,7 @@ const getCurrentUser = createAsyncThunk(
             const response = await accountServices.getAccounts()
             // console.log("check response: ", response)
             if (response.success) {
-                setItemWithKey("user_data", response.data)
+                setItemWithKey(USER_KEY, response.data)
                 return response.data
             }
             else return response.message
@@ -70,6 +74,25 @@ const getCurrentUser = createAsyncThunk(
         }
     }
 )
+
+const getMFASettings = createAsyncThunk(
+    'user/mfaSettings',
+    async (_, { rejectWithValue }) => {
+        try {
+            const response = await mfaSettingServices.getMFASetting()
+            console.log("MFA Settings fetched: ", response.data)
+            if (response.success) {
+                setItemWithKey(MFA_SETTINGS_KEY, response.data)
+                // await new Promise(resolve => setTimeout(resolve, 1500))
+                return response.data
+            } else return response.message
+        } catch (error) {
+            if (error instanceof Error) {
+                return rejectWithValue(error.message);
+            }
+            return rejectWithValue("An unknown error occurred");
+        }
+    })
 
 const authSlice = createSlice({
     name: 'auth',
@@ -117,10 +140,25 @@ const authSlice = createSlice({
                 state.isAuthenticated = false
                 state.isLoading = false
             })
+            .addCase(getMFASettings.pending, (state) => {
+                state.isLoading = true
+                state.errors = null
+                state.mfaSettings = null
+            })
+            .addCase(getMFASettings.fulfilled, (state, action: PayloadAction<MFASettingResponseDTO>) => {
+                state.mfaSettings = action.payload
+                state.isLoading = false
+                state.errors = null
+            })
+            .addCase(getMFASettings.rejected, (state, action) => {
+                state.mfaSettings = null
+                state.isLoading = false
+                state.errors = action.payload
+            })
     }
 })
 
 // Action creators are generated for each case reducer function
-export { login, getCurrentUser, }
+export { login, getCurrentUser, getMFASettings, }
 export const { logout, incrementByAmount } = authSlice.actions
 export default authSlice.reducer

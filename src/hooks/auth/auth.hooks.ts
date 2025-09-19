@@ -1,12 +1,26 @@
 'use client'
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
-import { getCurrentUser, login, logout } from "@/redux/slices/authSlices";
+import { getCurrentUser, getMFASettings, login, logout } from "@/redux/slices/authSlices";
 import { TOASTIFY_ERROR, TOASTIFY_SUCCESS, useToastify } from "@/store/Toastify";
 import { LoginRequestDTO } from "@/types/request/auth.request.dto";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
 const useAuth = () => useAppSelector(state => state.auth)
+
+const useAuthAccount = () => {
+    const auth = useAppSelector(state => state.auth)
+    const dispatch = useAppDispatch()
+
+    useEffect(() => {
+        if (auth.isAuthenticated && !auth.account) {
+            console.log("Fetching current user...")
+            // get current user
+            dispatch(getCurrentUser())
+        }
+    }, [])
+    return auth
+}
 
 const useLogin = () => {
     const auth = useAppSelector(state => state.auth)
@@ -42,8 +56,30 @@ const useLogout = () => {
     return logOut
 }
 
+const useGetMFASettings = () => {
+    const mfaSetting = useAppSelector(state => state.auth.mfaSettings)
+    const isLoading = useAppSelector(state => state.auth.isLoading)
+    const errors = useAppSelector(state => state.auth.errors)
+
+
+    const dispatch = useAppDispatch()
+    useEffect(() => {
+        if (!mfaSetting) {
+            dispatch(getMFASettings())
+            console.log("Fetching MFA Settings...")
+        }
+    }, [])
+
+    return { mfaSetting, isLoading, errors }
+}
+
+const useMFASettings = () => useAppSelector(state => state.auth.mfaSettings)
+
 export {
     useAuth,
+    useAuthAccount,
+    useMFASettings,
     useLogin,
-    useLogout
+    useLogout,
+    useGetMFASettings
 }
