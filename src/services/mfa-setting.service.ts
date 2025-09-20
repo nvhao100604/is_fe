@@ -1,6 +1,13 @@
 import api from "@/config/axios"
-import { VerifyDeviceWithTOTP } from "../types/request/VerifyDeviceWithTotp.dto"
 
+interface VerifyDeviceWithTOTP {
+    username?: string;
+    deviceId?: number;
+    totpVerificationDTO?: {
+        code?: string;
+        secretKey?: string
+    }
+}
 const verifyTOTP = async (request: VerifyDeviceWithTOTP): Promise<any> => {
     const response = await api.post('/mfa-settings/verify-totp', request)
     return response.data
