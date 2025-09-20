@@ -7,28 +7,6 @@
 
 import api from "@/config/axios"
 import { VerifyDeviceWithTOTP } from "@/types/request/VerifyDeviceWithTotp.dto"
-// const BASE_URL = BASE_MFA_URL;
-
-// class MfaSettingService {
-//   async verifyDeviceWithToTP(verification: VerifyDeviceWithTOTP): Promise<AuthenticationDTO> {
-//     const response = await configRequest.makeAuthenticatedRequest<AuthenticationDTO>(`${BASE_URL}/verify-totp`, {
-//       method: 'POST',
-//       body: JSON.stringify(verification),
-//     });
-//     return response.data;
-//   }
-
-//   async getMfaSettings(): Promise<APIResponse<MFASettingResponseDTO> | any> {
-//     const response = await configRequest.makeAuthenticatedRequest<APIResponse<MFASettingResponseDTO>>(`${BASE_URL}`, {
-//       method: 'GET',
-//     });
-//     return response;
-//   }
-
-
-// }
-
-// export const mfaSettingService = new MfaSettingService();
 
 const verifyTOTP = async (request: VerifyDeviceWithTOTP): Promise<any> => {
     const response = await api.post('/mfa-settings/verify-totp', request)
