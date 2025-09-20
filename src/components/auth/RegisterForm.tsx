@@ -8,9 +8,11 @@ import { validateEmail, validatePassword, validateUsername } from '../../utils/v
 import { RegisterRequestDTO } from '../../types/request/auth.request.dto';
 import { accountServices } from '@/services/account.service';
 import { Button } from '../common/Button';
+import { TOASTIFY_ERROR, useToastify } from '@/store/Toastify';
 
 export const RegisterForm: React.FC = () => {
   const router = useRouter();
+    const toastify = useToastify()
   // const { register } = useAuth();
   const [isLoading, setIsLoading] = useState(false)
   const [formData, setFormData] = useState<RegisterRequestDTO>({
@@ -90,8 +92,18 @@ export const RegisterForm: React.FC = () => {
         localStorage.setItem("verify_email", response.data.accountEmail)
         router.push('/auth/verify-otp');
       }
-    } catch (error) {
-      console.error(error)
+    } catch (error: any) {
+    // Nếu dùng axios
+    if (error.response) {
+      if (error.response.status === 409) {
+        toastify.notify("Email or Username already exists", TOASTIFY_ERROR)
+        // ở đây có thể show message UI
+      } else {
+        console.error("Lỗi khác:", error.response.status, error.response.data);
+      }
+    } else {
+      console.error("Lỗi kết nối hoặc ngoài dự kiến:", error);
+    }
     } finally {
       setIsLoading(false)
     }
