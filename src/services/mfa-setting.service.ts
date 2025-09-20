@@ -1,10 +1,3 @@
-// import { VerifyDeviceWithTOTP } from "@/types/request/verifydevicewithtotp.dto";
-// import { AuthenticationDTO } from "@/types/response/auth.response.dto";
-// import { MFASettingResponseDTO } from "@/types/response/mfasetting.response.dto";
-// import { APIResponse } from "@/types/api";
-// import { BASE_MFA_URL } from "../constants";
-// import { configRequest } from "@/config/api/config.api";
-
 import api from "@/config/axios"
 import { VerifyDeviceWithTOTP } from "@/types/request/VerifyDeviceWithTotp.dto"
 
