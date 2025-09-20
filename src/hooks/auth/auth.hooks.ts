@@ -44,7 +44,7 @@ const useLogin = () => {
             }
         }
         getUserData()
-    }, [auth.isAuthenticated, auth.errors])
+    }, [auth.isAuthenticated])
 
     return logIn
 }

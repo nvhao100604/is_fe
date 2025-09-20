@@ -4,7 +4,7 @@
 // import { TrustDeviceFilter } from "@/types/request/filters/TrustDeviceFilter";
 // import { BASE_TRUST_DEVICE_URL } from "../constants";
 // import { configRequest } from "@/config/api/config.api";
-
+"use client"
 import api from "@/config/axios"
 import { Query } from "@/types/api"
 import { QueryToParams } from "@/utils"
@@ -73,6 +73,12 @@ const getTrustDeviceByFilter = async (query: Query, option?: object): Promise<an
     return response.data
 }
 
+const deleteTrustDevice = async (deviceId: number): Promise<any> => {
+    const response = await api.delete(`/trust-devices/${deviceId}`)
+    return response.data
+}
+
 export const trustDeviceServices = {
-    getTrustDeviceByFilter
+    getTrustDeviceByFilter,
+    deleteTrustDevice
 }

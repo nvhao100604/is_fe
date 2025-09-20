@@ -74,6 +74,22 @@ export default function TrustDevicesDashboard() {
   const activeRate = devices.length > 0 ? Math.round((activeDevices / devices.length) * 100) : 0;
   const verifiedRate = devices.length > 0 ? Math.round((verifiedDevices / devices.length) * 100) : 0;
 
+  const deleteTrustDevice = async (trustDeviceId: number) => {
+    try {
+      setLoading(true);
+      const response = await trustDeviceServices.deleteTrustDevice(trustDeviceId);
+      if (response.success) {
+        console.log("Delete success:", response);
+      } else {
+        setError(response.errors);
+      }
+    } catch (error) {
+      setError((error as any).message);
+    } finally {
+      setLoading(false);
+    }
+  };  
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-blue-50 p-6">
       <div className="max-w-7xl mx-auto">
@@ -380,10 +396,7 @@ export default function TrustDevicesDashboard() {
                           >
                             {device.deviceIsVerified ? "🔓" : "🔒"}
                           </button> */}
-                          <button
-                            className="text-red-600 hover:text-red-900 bg-red-50 hover:bg-red-100 px-2 py-1 rounded text-xs"
-                            title="Delete Device"
-                          >
+                          <button onClick={() => deleteTrustDevice(device.trustDeviceId)} className="text-red-600 hover:text-red-900 bg-red-50 hover:bg-red-100 px-2 py-1 rounded text-xs" title="Delete Device">
                             🗑️
                           </button>
                         </div>
