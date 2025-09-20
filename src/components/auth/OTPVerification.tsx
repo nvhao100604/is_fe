@@ -3,8 +3,8 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '../common/Button';
 import { validateOTP } from '../../utils/validation.util';
-import { EmailVerification, mailServices } from '@/services/mail.services';
-import { TOASTIFY_ERROR, useToastify } from '@/store/Toastify';
+import { EmailResendOTP, EmailVerification, mailServices } from '@/services/mail.services';
+import { TOASTIFY_ERROR, TOASTIFY_INFO, TOASTIFY_SUCCESS, useToastify } from '@/store/Toastify';
 
 interface OTPVerificationProps {
   email?: string;
@@ -15,7 +15,7 @@ export const OTPVerification: React.FC<OTPVerificationProps> = ({ email, onResen
   const router = useRouter();
   // const { loading, error, execute } = useApi();
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
-  const [timeLeft, setTimeLeft] = useState(300); // 5 minutes
+  const [timeLeft, setTimeLeft] = useState(10); // 5 minutes
   const [canResend, setCanResend] = useState(false);
   const [isLoading, setIsLoading] = useState(false)
   const toastify = useToastify()
@@ -74,12 +74,16 @@ export const OTPVerification: React.FC<OTPVerificationProps> = ({ email, onResen
   };
 
   const handleResend = async () => {
-    if (onResend) {
-      onResend();
-      setTimeLeft(300);
       setCanResend(false);
       setOtp(['', '', '', '', '', '']);
-    }
+      const emailLocal = localStorage.getItem("verify_email") ?? ''
+      const email: EmailResendOTP = { email: emailLocal }
+      const response = await mailServices.sendVerificationEmail(email)
+      if (response.success) {
+        toastify.notify("OTP sent successfully", TOASTIFY_INFO)
+      } else {
+        toastify.notify("Resend OTP Error. Please try again later.", TOASTIFY_ERROR)
+      }
   };
 
   const formatTime = (seconds: number) => {

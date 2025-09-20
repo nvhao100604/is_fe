@@ -1,10 +1,11 @@
+'use client'
 import React from 'react';
-import { useRouter } from 'next/router';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { OTPVerification } from '@/components/auth/OTPVerification';
 
 export default function VerifyEmailPage() {
     const router = useRouter();
-    const { email } = router.query;
+    const email = useSearchParams();
 
     const handleResend = async () => {
         try {
