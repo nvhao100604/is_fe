@@ -28,24 +28,24 @@ export default function OAuthCallbackPage() {
 
     const handleOAuthCallback = async () => {
         try {
-            const { code, state, error: oauthError, provider } = query;
+            // const { code, state, error: oauthError, provider } = query;
             const stateOriginal = localStorage.getItem('github_oauth_state');
 
-            if (oauthError) {
-                throw new Error(`OAuth error: ${oauthError}`);
-            }
+            // if (oauthError) {
+            //     throw new Error(`OAuth error: ${oauthError}`);
+            // }
 
             // if (!code) {
             //   throw new Error('No authorization code received');
             // }
 
-            if (provider === 'github' || state) {
-                console.log('IF.Handling GitHub callback with code:', code, 'and state:', state, 'and stateOriginal:', stateOriginal);
-                await handleGitHubCallback(code as string, state as string);
-            } else {
-                console.log('ELSE.Handling Google callback with code:', code);
-                //await handleGoogleCallback(code as string);
-            }
+            // if (provider === 'github' || state) {
+            //     console.log('IF.Handling GitHub callback with code:', code, 'and state:', state, 'and stateOriginal:', stateOriginal);
+            //     await handleGitHubCallback(code as string, state as string);
+            // } else {
+            //     console.log('ELSE.Handling Google callback with code:', code);
+            //     await handleGoogleCallback(code as string);
+            // }
         } catch (err) {
             console.error('OAuth callback error:', err);
             setError(err instanceof Error ? err.message : 'Authentication failed');

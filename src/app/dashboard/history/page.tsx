@@ -1,4 +1,3 @@
-import { NextPageWithLayout } from "@/components/auth/NextPageWithLayout";
 import { Metadata } from "next";
 import ProtectedProvider from "@/components/providers/ProtectedProvider";
 import LoginAttemptsDashboard from "@/components/dashboard/loginAttempts/LoginAttemptLayout";
@@ -7,7 +6,7 @@ export const metadata: Metadata = {
     title: "History | Information Security",
 };
 
-const History: NextPageWithLayout = () => {
+const History = () => {
     return (
         <ProtectedProvider>
             <LoginAttemptsDashboard />

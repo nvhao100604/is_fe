@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 
-const SetupEmailPage: React.FC = () => {
+const SetupEmailPage = () => {
   const router = useRouter();
   const [step, setStep] = useState<'enable' | 'verify'>('enable');
   const [verificationCode, setVerificationCode] = useState('');

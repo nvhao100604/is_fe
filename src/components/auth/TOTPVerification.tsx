@@ -20,12 +20,12 @@ export const TOTPVerification = () => {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false)
 
-  const pendingAuth: any = sessionStorage.getItem("pendingAuth");
-  const parsedPendingAuth = pendingAuth ? JSON.parse(pendingAuth) : null;
+  // const pendingAuth: any = sessionStorage.getItem("pendingAuth") || null;
+  // const parsedPendingAuth = pendingAuth ? JSON.parse(pendingAuth) : null;
 
   const verification: VerifyDeviceWithTOTP = {
-    username: parsedPendingAuth?.username,
-    deviceId: parsedPendingAuth?.deviceId,
+    // username: parsedPendingAuth?.username,
+    // deviceId: parsedPendingAuth?.deviceId,
     totpVerificationDTO: {
       code: '',
     },

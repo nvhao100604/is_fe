@@ -5,7 +5,7 @@ import { OTPVerification } from '@/components/auth/OTPVerification';
 
 export default function VerifyEmailPage() {
     const router = useRouter();
-    const email = useSearchParams();
+    const email = "";
 
     const handleResend = async () => {
         try {
@@ -18,7 +18,7 @@ export default function VerifyEmailPage() {
 
     return (
         <OTPVerification
-            email={typeof email === 'string' ? email : undefined}
+            email={typeof email === 'string' ? email : ""}
             onResend={handleResend}
         />
     );
