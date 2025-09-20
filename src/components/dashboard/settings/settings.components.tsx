@@ -2,7 +2,6 @@ import { MFASettingResponseDTO } from "@/types/response/mfasetting.response.dto"
 import Link from "next/link"
 import { ReactNode } from "react";
 
-
 interface MethodBoxProps {
     mfaSetting: MFASettingResponseDTO | null;
     href: string;

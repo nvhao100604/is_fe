@@ -11,7 +11,7 @@ import { authServices } from '@/services/auth.service';
 export const ForgotPasswordForm: React.FC = () => {
   const router = useRouter();
   const [step, setStep] = useState<'request' | 'otp'>('request');
-  const [otpSent, setOtpSent] = useState(false);
+  // const [otpSent, setOtpSent] = useState(false);
 
   const [formData, setFormData] = useState<ForgotPasswordRequestDTO>({
     username: '',
@@ -76,12 +76,12 @@ export const ForgotPasswordForm: React.FC = () => {
 
     if (!validateRequestForm()) return;
 
-    const response: any = await authServices.forgotPassword(formData);
+    // const response: any = await authServices.forgotPassword(formData);
 
-    if (response.success) {
-      setStep('otp');
-      setOtpSent(true);
-    }
+    // if (response.success) {
+    //   setStep('otp');
+    //   setOtpSent(true);
+    // }
   };
 
   const handleOtpSubmit = async (e: React.FormEvent) => {
@@ -98,15 +98,15 @@ export const ForgotPasswordForm: React.FC = () => {
       return;
     }
 
-    const response: any = await authService.resetPassword({
-      otp: otpValue,
-      newPassword
-    });
+    // const response: any = await authService.resetPassword({
+    //   otp: otpValue,
+    //   newPassword
+    // });
 
 
-    if (response) {
-      router.push('/auth/login?message=Password reset successful');
-    }
+    // if (response) {
+    //   router.push('/auth/login?message=Password reset successful');
+    // }
   };
 
   if (step === 'otp') {
