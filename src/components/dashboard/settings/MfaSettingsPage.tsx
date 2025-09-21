@@ -2,15 +2,134 @@
 import { useGetMFASettings, useUpdateMFASettings } from "@/hooks/auth/auth.hooks";
 import Link from "next/link";
 import { MethodBox } from "./settings.components";
+import { useState } from "react";
+import Modal from "@/components/common/Modal";
+import { authServices } from "@/services/auth.service";
+import { useRouter } from "next/navigation";
+import { TOASTIFY_ERROR, TOASTIFY_INFO, useToastify } from "@/store/Toastify";
+import MfaUsageExamples, { MfaVerification } from "@/components/auth/MfaUsageExamples";
+
+
 
 const MfaSettingsPage = () => {
+  const toastify = useToastify()
+    const router = useRouter()
+  const [showVerifyModal, setShowVerifyModal] = useState(false);
+const [password, setPassword] = useState("");
+const [pendingAction, setPendingAction] = useState<null | (() => void)>(null);
+const [errorMessage, setErrorMessage] = useState("");
+
   const { mfaSetting, isLoading, errors } = useGetMFASettings()
+
+  const [showMfaVerification, setShowMfaVerification] = useState(false);
+  const [pendingSetupMethod, setPendingSetupMethod] = useState<'TOTP' | 'EMAIL' | 'WEBAUTHN' | null>(null);
   const updateMFASettings = useUpdateMFASettings()
+
+  const handleEnableEmail = async () => {
+      setPendingSetupMethod('EMAIL');
+      setShowMfaVerification(true);
+  }
+
+  const handleEnableWebAuthn = async () => {
+    console.log('Enable WebAuthn MFA');
+  }
+
+  const handleEnableTOTP = async () => {
+    setPendingSetupMethod('TOTP');
+      setShowMfaVerification(true);
+  }
+
+  const handleDisableEmail = async () => {
+    console.log('Disable Email MFA');
+  }
+
+  const handleDisableWebAuthn = async () => {
+    console.log('Disable WebAuthn MFA');
+  }
+
+  const handleDisableTOTP = async () => {
+    requirePassword( () => {
+      console.log("Disable TOTP MFA");
+    });
+  }
+
+  const requirePassword = (action: () => void) => {
+    setPendingAction(() => action); // lưu action (enable/disable)
+    setShowVerifyModal(true);
+  };
+
+const verifyPassword = async () => {
+  try {
+    setErrorMessage("");
+    // gọi API verify password
+    const res = await authServices.verifyPassword({ password });
+    console.log(res);
+    if (!res.data) {
+      setErrorMessage("Password incorrect");
+      return;
+    }
+
+    // nếu đúng → chạy tiếp action đã lưu
+    if (pendingAction) {
+      await pendingAction();
+    }
+
+    setShowVerifyModal(false);
+    setPassword("");
+    setPendingAction(null);
+  } catch (err) {
+    setErrorMessage("Something went wrong");
+  }
+};
+
+const handleMfaVerificationSuccess = () => {
+    // After MFA verification succeeds, navigate to setup page
+    switch (pendingSetupMethod) {
+      case 'TOTP':
+        router.push('/auth/mfa/setup-totp');
+        break;
+      case 'EMAIL':
+        router.push('/auth/mfa/setup-email');
+        break;
+      case 'WEBAUTHN':
+        router.push('/auth/mfa/setup-webauthn');
+        break;
+    }
+    setShowMfaVerification(false);
+    setPendingSetupMethod(null);
+  };
+
+   const handleMfaVerificationCancel = () => {
+    setShowMfaVerification(false);
+    setPendingSetupMethod(null);
+  };
+
+  if (showMfaVerification) {
+    return (
+      <MfaVerification
+        action="security_settings"
+        title="Verify Identity for MFA Setup"
+        description={`Please verify your identity before setting up ${pendingSetupMethod} authentication.`}
+        onSuccess={handleMfaVerificationSuccess}
+        onCancel={handleMfaVerificationCancel}
+      />
+    );
+  }
+
+
 
   const handleToggleMfa = async () => {
     // TODO: Implement toggle MFA functionality
     // console.log('Toggle MFA');
     if (mfaSetting) {
+      const mfaEnabled =!mfaSetting.mfaEnabled;
+      if(mfaEnabled){
+        if(!mfaSetting.mfaTotpEnable && !mfaSetting.mfaEmailEnabled && !mfaSetting.mfaWebauthnEnabled){
+          toastify.notify("Please enable at least one authentication method before enabling MFA.", TOASTIFY_INFO);
+          return;
+        }
+      }
+
       updateMFASettings({
         mfaId: mfaSetting.mfaId,
         data: { ...mfaSetting, mfaEnabled: !mfaSetting.mfaEnabled },
@@ -38,6 +157,37 @@ const MfaSettingsPage = () => {
         </div>
       </div>
     );
+  }
+  if(showVerifyModal){
+    return (
+      <Modal handleClick={() => setShowVerifyModal(false)}>
+    <div className="p-6">
+      <h2 className="text-lg font-bold mb-4">Verify your password</h2>
+      <input
+        type="password"
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+        className="w-full border rounded p-2 mb-2"
+        placeholder="Enter your password"
+      />
+      {errorMessage && <p className="text-red-600 text-sm">{errorMessage}</p>}
+      <div className="mt-4 flex justify-end space-x-2">
+        <button
+          onClick={() => setShowVerifyModal(false)}
+          className="px-4 py-2 bg-gray-200 rounded"
+        >
+          Cancel
+        </button>
+        <button
+          onClick={verifyPassword}
+          className="px-4 py-2 bg-blue-600 text-white rounded"
+        >
+          Verify
+        </button>
+      </div>
+    </div>
+  </Modal>
+    )
   }
 
   return (
@@ -79,8 +229,9 @@ const MfaSettingsPage = () => {
                 href={"/auth/mfa/setup-totp"}
                 label="Authenticator App"
                 description="Use an app like Google Authenticator or Authy"
-                handleClick={() => { /* TODO: Handle TOTP setup */ }}
-                handleDisable={() => { /* TODO: Handle TOTP disable */ }}
+                tag="TOTP"
+                handleClick={() => { handleEnableTOTP() }}
+                handleDisable={() => { handleDisableTOTP() }}
               ><svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                 </svg>
@@ -89,8 +240,9 @@ const MfaSettingsPage = () => {
                 href={"/auth/mfa/setup-email"}
                 label="Email Authentication"
                 description="Receive codes via email"
-                handleClick={() => { /* TODO: Handle Email setup */ }}
-                handleDisable={() => { /* TODO: Handle Email disable */ }}
+                tag="Email"
+                handleClick={() => { handleEnableEmail() }}
+                handleDisable={() => { handleDisableEmail() }}
               ><svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                 </svg>
@@ -99,8 +251,9 @@ const MfaSettingsPage = () => {
                 href={"/auth/mfa/setup-webauthn"}
                 label="Security Key (WebAuthn)"
                 description="Use hardware security keys or biometric authentication"
-                handleClick={() => { /* TODO: Handle WebAuthn setup */ }}
-                handleDisable={() => { /* TODO: Handle WebAuthn disable */ }}
+                tag="WebAuthn"
+                handleClick={() => { handleEnableWebAuthn() }}
+                handleDisable={() => { handleDisableWebAuthn() }}
               ><svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
                 </svg>

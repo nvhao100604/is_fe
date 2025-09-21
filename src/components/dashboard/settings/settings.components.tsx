@@ -8,6 +8,7 @@ interface MethodBoxProps {
     children: ReactNode,
     label: string,
     description: string,
+    tag: string,
     handleClick: () => void;
     handleDisable: () => void;
 }
@@ -17,6 +18,7 @@ const MethodBox = ({ mfaSetting,
     label,
     description,
     children,
+    tag,
     handleClick,
     handleDisable
 }: MethodBoxProps) => {
@@ -37,21 +39,72 @@ const MethodBox = ({ mfaSetting,
                     </div>
                 </div>
                 <div>
-                    {(mfaSetting && mfaSetting.mfaTotpEnable) ? (
-                        <button
-                            onClick={handleClick}
-                            className="text-sm text-red-600 hover:text-red-800"
-                        >
-                            Create
-                        </button>
-                    ) : (
-                        <button
-                            onClick={handleDisable}
-                            className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-red-600 hover:bg-red-700"
-                        >
-                            <Link href={href}>Disable</Link>
-                        </button>
-                    )}
+                    {(() => {
+                        if (tag === "TOTP") {
+                            if (mfaSetting && mfaSetting.mfaTotpEnable) {
+                                return (
+                                    <button
+                                        onClick={handleDisable}
+                                        className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-red-600 hover:bg-red-700"
+                                    >
+                                        <Link href={href}>Disable</Link>
+                                    </button>
+                                );
+                            } else {
+                                return (
+                                    <button
+                                        onClick={handleClick}
+                                        className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-red-600 hover:bg-green-700"
+                                    >
+                                        Set up
+                                    </button>
+                                );
+                            }
+                        }
+                        if (tag === "Email") {
+                            if (mfaSetting && mfaSetting.mfaEmailEnabled) {
+                                return (
+                                    <button
+                                        onClick={handleDisable}
+                                        className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-red-600 hover:bg-red-700"
+                                    >
+                                        <Link href={href}>Disable</Link>
+                                    </button>
+                                );
+                            } else {
+                                return (
+                                    <button
+                                        onClick={handleClick}
+                                                                                className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-red-600 hover:bg-green-700"
+
+                                    >
+                                        Set up
+                                    </button>
+                                );
+                            }
+                        }
+                        if (tag === "WebAuthn") {
+                            if (mfaSetting && mfaSetting.mfaWebauthnEnabled) {
+                                return (
+                                    <button
+                                        onClick={handleDisable}
+                                        className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-red-600 hover:bg-red-700"
+                                    >
+                                        <Link href={href}>Disable</Link>
+                                    </button>
+                                );
+                            } else {
+                                return (
+                                    <button
+                                        onClick={handleClick}
+                                        className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-red-600 hover:bg-green-700"
+                                    >
+                                        Set up
+                                    </button>
+                                );
+                            }
+                        }
+                    })()}                    
                 </div>
             </div>
         </div>

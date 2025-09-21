@@ -20,3 +20,7 @@ export interface VerifyOTPRequestDTO {
   otp: string;
   token?: string;
 }
+
+export interface PasswordVerify {
+  password: string;
+}

@@ -1,6 +1,6 @@
 import React from 'react';
 // import { useRouter } from 'next/router';
-import { TOTPVerification } from '@/components/auth/TOTPVerification';
+import { TOTPSetup,  } from '@/components/auth/TOTPVerification';
 
 export default function VerifyToTpPage() {
     // const router = useRouter();
@@ -19,6 +19,16 @@ export default function VerifyToTpPage() {
     // };
 
     return (
-        <TOTPVerification />
+        // Trong MFA Settings Page
+<TOTPSetup
+  onSuccess={() => {
+    // TOTP setup thành công
+    //router.push('/settings/mfa?success=totp-enabled');
+  }}
+  onCancel={() => {
+    // User cancel setup
+    //router.back();
+  }}
+/>
     );
 }

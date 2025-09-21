@@ -1,12 +1,12 @@
 import api from "@/config/axios"
 
 export interface EmailVerification {
-    email: string,
+    email: string | null,
     otp: string
 }
 
 export interface EmailResendOTP {
-    email: string
+    email: string | null
 }
 const verifySignUp = async (emailVerification: EmailVerification): Promise<any> => {
     const response = await api.post("/mail/verified-signup", emailVerification)
