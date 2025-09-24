@@ -6,8 +6,9 @@ import { useState } from "react";
 import Modal from "@/components/common/Modal";
 import { authServices } from "@/services/auth.service";
 import { useRouter } from "next/navigation";
-import { TOASTIFY_ERROR, TOASTIFY_INFO, useToastify } from "@/store/Toastify";
-import MfaUsageExamples, { MfaVerification } from "@/components/auth/MfaUsageExamples";
+import { TOASTIFY_ERROR, TOASTIFY_INFO, TOASTIFY_SUCCESS, useToastify } from "@/store/Toastify";
+import MfaUsageExamples, { MfaVerification } from "@/components/auth/MfaVerification";
+import { TOTPSetup } from "./setup-totp";
 
 
 
@@ -24,6 +25,8 @@ const [errorMessage, setErrorMessage] = useState("");
   const [showMfaVerification, setShowMfaVerification] = useState(false);
   const [pendingSetupMethod, setPendingSetupMethod] = useState<'TOTP' | 'EMAIL' | 'WEBAUTHN' | null>(null);
   const updateMFASettings = useUpdateMFASettings()
+
+  console.log(mfaSetting);
 
   const handleEnableEmail = async () => {
       setPendingSetupMethod('EMAIL');
@@ -81,6 +84,19 @@ const verifyPassword = async () => {
     setErrorMessage("Something went wrong");
   }
 };
+
+const onSuccess = async() => {
+  if(pendingSetupMethod == 'EMAIL'){
+    console.log("Verify Email")
+  }
+  else if(pendingSetupMethod == 'TOTP'){
+    console.log("Verify TOTP")
+  }
+  else if(pendingSetupMethod == 'WEBAUTHN'){
+    console.log("verify WEBAUTHN")
+  }
+  router.push('/dashboard/setting')
+}
 
 const handleMfaVerificationSuccess = () => {
     // After MFA verification succeeds, navigate to setup page

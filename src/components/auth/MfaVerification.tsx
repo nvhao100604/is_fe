@@ -1,9 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { mfaSettingServices } from '@/services/mfa-setting.service';
-import { EmailResendOTP, EmailVerification, mailServices } from '@/services/mail.services';
-import { authServices } from '@/services/auth.service';
-import { TOASTIFY_ERROR, TOASTIFY_SUCCESS, useToastify } from '@/store/Toastify';
 
 // Types
 interface MfaSettings {
@@ -26,6 +22,7 @@ interface MfaVerificationProps {
   onCancel?: () => void;
   title?: string;
   description?: string;
+  username?: string | null;
 }
 
 const MfaVerification: React.FC<MfaVerificationProps> = ({
@@ -33,9 +30,9 @@ const MfaVerification: React.FC<MfaVerificationProps> = ({
   onSuccess,
   onCancel,
   title,
-  description
+  description,
+  username
 }: MfaVerificationProps) => {
-  const toastify = useToastify()
   const router = useRouter();
   const [mfaSettings, setMfaSettings] = useState<MfaSettings | null>(null);
   const [currentMethod, setCurrentMethod] = useState<string>('');
@@ -44,67 +41,96 @@ const MfaVerification: React.FC<MfaVerificationProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [availableMethods, setAvailableMethods] = useState<string[]>([]);
 
+  const isLoginAction = action === 'login';
+
   useEffect(() => {
     loadMfaSettings();
   }, []);
 
+  // ========================================
+  // LOAD MFA SETTINGS & SEND INITIAL EMAIL
+  // ========================================
   const loadMfaSettings = async () => {
     try {
       setLoading(true);
-      // TODO: Call API to get MFA settings
-      const response = await mfaSettingServices.getMFASetting({ option: {} });
+      
+      // TODO: API CALL - Send initial email based on action type
+      if (isLoginAction) {
+        // FOR LOGIN: Send device verification email
+        if (username) {
+          const formVerify = { username: username };
+          // await mailServices.sendVerificationDevice(formVerify);
+          console.log('TODO: Send device verification email for login:', formVerify);
+        }
+      } else {
+        // FOR OTHER ACTIONS: Send notification email
+        // await authServices.sendEmailNotificationVerify();
+        console.log('TODO: Send notification email for', action);
+      }
 
-      if(response.success) {
-        setMfaSettings(response.data);
-        setCurrentMethod(response.data.mfaPrimaryMethod);
-        const methods = [];
-        if (response.data.mfaEmailEnabled){ 
-          authServices.sendEmailNotificationVerify();
-            methods.push('EMAIL')
-          };
-        if (response.data.mfaTotpEnable) methods.push('TOTP');
-        if (response.data.mfaWebauthnEnabled) methods.push('WEBAUTHN');
-        if (response.data.mfaAuthenticatorAppEnabled) methods.push('AUTHENTICATOR_APP');
-        methods.push('PASSWORD');
-        methods.push('BACKUP_CODES');
+      // TODO: API CALL - Get MFA settings
+      const formVerify = { username: isLoginAction ? username : null };
+      // const response = await mfaSettingServices.getMFASetting(formVerify, { option: {} });
+      
+      // Mock data for development
+      const mockResponse = {
+        success: true,
+        data: {
+          mfaId: 4,
+          mfaEnabled: true,
+          mfaPrimaryMethod: 'EMAIL' as const,
+          mfaBackupMethod: null,
+          mfaTotpSecretKey: null,
+          mfaTotpEnable: true,
+          mfaEmailEnabled: true,
+          mfaWebauthnEnabled: false,
+          mfaAuthenticatorAppEnabled: false,
+          mfaRequiredMfaForSensitiveActions: false,
+          mfaUpdatedAt: '2025-09-22T02:01:11'
+        }
+      };
+
+      if (mockResponse.success) {
+        setMfaSettings(mockResponse.data);
+        setCurrentMethod(mockResponse.data.mfaPrimaryMethod);
+        
+        // Build available methods based on action type
+        const methods = buildAvailableMethods(mockResponse.data, isLoginAction);
         setAvailableMethods(methods);
       }
-      // setMfaSettings(response.data);
-      
-      // const mockSettings: MfaSettings = {
-      //   mfaId: 4,
-      //   mfaEnabled: true,
-      //   mfaPrimaryMethod: 'EMAIL',
-      //   mfaBackupMethod: null,
-      //   mfaTotpSecretKey: null,
-      //   mfaTotpEnable: true,
-      //   mfaEmailEnabled: true,
-      //   mfaWebauthnEnabled: false,
-      //   mfaAuthenticatorAppEnabled: false,
-      //   mfaRequiredMfaForSensitiveActions: false,
-      //   mfaUpdatedAt: '2025-09-22T02:01:11'
-      // };
-      
-      // setMfaSettings(mockSettings);
-      // setCurrentMethod(mockSettings.mfaPrimaryMethod);
-      
-      // const methods = [];
-      // if (mockSettings.mfaEmailEnabled) methods.push('EMAIL');
-      // if (mockSettings.mfaTotpEnable) methods.push('TOTP');
-      // if (mockSettings.mfaWebauthnEnabled) methods.push('WEBAUTHN');
-      // if (mockSettings.mfaAuthenticatorAppEnabled) methods.push('AUTHENTICATOR_APP');
-      // methods.push('PASSWORD');
-      // methods.push('BACKUP_CODES');
-      
-      // setAvailableMethods(methods);
       
     } catch (err) {
       setError('Failed to load MFA settings');
+      console.error('Load MFA settings error:', err);
     } finally {
       setLoading(false);
     }
   };
 
+  // ========================================
+  // BUILD AVAILABLE METHODS
+  // ========================================
+  const buildAvailableMethods = (settings: MfaSettings, isLogin: boolean): string[] => {
+    const methods: string[] = [];
+    
+    // Add enabled MFA methods
+    if (settings.mfaEmailEnabled) methods.push('EMAIL');
+    if (settings.mfaTotpEnable) methods.push('TOTP');
+    if (settings.mfaWebauthnEnabled) methods.push('WEBAUTHN');
+    if (settings.mfaAuthenticatorAppEnabled) methods.push('AUTHENTICATOR_APP');
+    
+    // Add fallback methods (NOT for login)
+    if (!isLogin) {
+      methods.push('BACKUP_CODES');
+      methods.push('PASSWORD');
+    }
+    
+    return methods;
+  };
+
+  // ========================================
+  // VERIFICATION HANDLERS
+  // ========================================
   const handleVerification = async () => {
     if (!verificationCode.trim()) return;
 
@@ -112,74 +138,267 @@ const MfaVerification: React.FC<MfaVerificationProps> = ({
       setLoading(true);
       setError(null);
 
-      // TODO: Call API to verify the code based on current method
-      // const response = await mfaService.verifyCode({
-      //   method: currentMethod,
-      //   code: verificationCode,
-      //   action: action
-      // });
-      
-      // Mock verification - simulate success after 1 second
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Simulate success
-      onSuccess();
-      
+      let response;
+
+      switch (currentMethod) {
+        case 'EMAIL':
+          response = await handleEmailVerification();
+          break;
+        
+        case 'TOTP':
+        case 'AUTHENTICATOR_APP':
+          response = await handleTOTPVerification();
+          break;
+        
+        case 'WEBAUTHN':
+          response = await handleWebAuthnVerification();
+          break;
+        
+        case 'BACKUP_CODES':
+          response = await handleBackupCodeVerification();
+          break;
+        
+        case 'PASSWORD':
+          response = await handlePasswordVerification();
+          break;
+        
+        default:
+          throw new Error('Unsupported verification method');
+      }
+
+      // Handle response
+      if (response?.success) {
+        if (isLoginAction && response.data) {
+          // Store tokens for login
+          localStorage.setItem('accessToken', response.token);
+          localStorage.setItem('refreshToken', response.refreshToken);
+          document.cookie = `accessToken=${response.token}; Path=/; SameSite=Strict`;
+        }
+        onSuccess();
+      } else {
+        setError(response?.message || 'Verification failed. Please try again.');
+      }
+
     } catch (err) {
-      setError('Invalid verification code. Please try again.');
+      setError('Verification failed. Please try again.');
+      console.error('Verification error:', err);
     } finally {
       setLoading(false);
     }
   };
 
+  // ========================================
+  // EMAIL VERIFICATION
+  // ========================================
+  const handleEmailVerification = async () => {
+    if (isLoginAction) {
+      // TODO: API CALL - Login email verification
+      const payload = {
+        username: username ?? "",
+        otp: verificationCode,
+      };
+      console.log('TODO: Login email verification:', payload);
+      // return await mailServices.verificationDevice(payload);
+      
+      // Mock response
+      return {
+        success: true,
+        data: true,
+        token: 'mock-access-token',
+        refreshToken: 'mock-refresh-token'
+      };
+    } else {
+      // TODO: API CALL - General email verification
+      const payload = {
+        email: null,
+        otp: verificationCode,
+      };
+      console.log('TODO: General email verification:', payload);
+      // return await mailServices.verifySignUp(payload);
+      
+      // Mock response
+      return { success: true, data: true };
+    }
+  };
+
+  // ========================================
+  // TOTP VERIFICATION
+  // ========================================
+  const handleTOTPVerification = async () => {
+    if (isLoginAction) {
+      // TODO: API CALL - Login TOTP verification
+      const payload = {
+        username: username ?? "",
+        totpVerificationDTO: {
+          code: verificationCode,
+        }
+      };
+      console.log('TODO: Login TOTP verification:', payload);
+      // return await mfaSettingServices.verifyTOTP(payload);
+      
+      // Mock response
+      return {
+        success: true,
+        mfaRequired: false,
+        token: 'mock-access-token',
+        refreshToken: 'mock-refresh-token'
+      };
+    } else {
+      // TODO: API CALL - General TOTP verification
+      const payload = {
+        code: verificationCode,
+        action: action
+      };
+      console.log('TODO: General TOTP verification:', payload);
+      // return await mfaSettingServices.verifyTOTPForAction(payload);
+      
+      // Mock response
+      return { success: true, data: true };
+    }
+  };
+
+  // ========================================
+  // WEBAUTHN VERIFICATION
+  // ========================================
+  const handleWebAuthnVerification = async () => {
+    // TODO: API CALL - WebAuthn verification
+    const payload = {
+      action: action,
+      username: isLoginAction ? username : undefined
+    };
+    console.log('TODO: WebAuthn verification:', payload);
+    // return await mfaSettingServices.verifyWebAuthn(payload);
+    
+    // Mock response
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        resolve({
+          success: true,
+          data: true,
+          ...(isLoginAction && {
+            token: 'mock-access-token',
+            refreshToken: 'mock-refresh-token'
+          })
+        });
+      }, 2000);
+    });
+  };
+
+  // ========================================
+  // BACKUP CODE VERIFICATION (Non-login only)
+  // ========================================
+  const handleBackupCodeVerification = async () => {
+    if (isLoginAction) {
+      throw new Error('Backup codes not allowed for login');
+    }
+    
+    // TODO: API CALL - Backup code verification
+    const payload = {
+      code: verificationCode,
+      action: action
+    };
+    console.log('TODO: Backup code verification:', payload);
+    // return await mfaSettingServices.verifyBackupCode(payload);
+    
+    // Mock response
+    return { success: true, data: true };
+  };
+
+  // ========================================
+  // PASSWORD VERIFICATION (Non-login only)
+  // ========================================
+  const handlePasswordVerification = async () => {
+    if (isLoginAction) {
+      throw new Error('Password verification not allowed for login');
+    }
+    
+    // TODO: API CALL - Password verification
+    const payload = {
+      password: verificationCode,
+      action: action
+    };
+    console.log('TODO: Password verification:', payload);
+    // return await authServices.verifyPassword(payload);
+    
+    // Mock response
+    return { success: true, data: true };
+  };
+
+  // ========================================
+  // SEND EMAIL CODE (Resend)
+  // ========================================
+  const sendEmailCode = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      if (isLoginAction) {
+        // TODO: API CALL - Resend device verification email
+        const payload = {
+          username: username ?? "",
+        };
+        console.log('TODO: Resend device verification email:', payload);
+        // await mailServices.sendVerificationDevice(payload);
+      } else {
+        // TODO: API CALL - Resend notification email
+        console.log('TODO: Resend notification email for', action);
+        // await authServices.sendEmailNotificationVerify();
+      }
+
+      // Show success message
+      console.log('Email code sent successfully');
+
+    } catch (err) {
+      setError('Failed to send email code');
+      console.error('Send email error:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ========================================
+  // WEBAUTHN HANDLER
+  // ========================================
+  const handleWebAuthn = async () => {
+    try {
+      setLoading(true);
+      const response = await handleWebAuthnVerification();
+      
+      if (response?.success) {
+        if (isLoginAction && response.token) {
+          localStorage.setItem('accessToken', response.token);
+          localStorage.setItem('refreshToken', response.refreshToken);
+          document.cookie = `accessToken=${response.token}; Path=/; SameSite=Strict`;
+        }
+        onSuccess();
+      } else {
+        setError('WebAuthn verification failed');
+      }
+    } catch (err) {
+      setError('WebAuthn verification failed');
+      console.error('WebAuthn error:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ========================================
+  // SWITCH METHOD
+  // ========================================
   const switchMethod = (method: string) => {
     setCurrentMethod(method);
     setVerificationCode('');
     setError(null);
     
-    // If switching to specific methods, trigger their setup/send process
+    // Auto-send email when switching to email method
     if (method === 'EMAIL') {
       sendEmailCode();
     }
   };
 
-  const sendEmailCode = async () => {
-    try {
-      setLoading(true);
-      const emailVerify: EmailVerification = { email: null, otp: verificationCode };
-      const response = await mailServices.verifySignUp(emailVerify);
-      if (response.success) {
-        if(response.data) {
-          toastify.notify('Verification email sent. Please check your inbox.', TOASTIFY_SUCCESS);
-          onSuccess();
-        }else{
-          toastify.notify('Email verification failed. Please try again.', TOASTIFY_ERROR);
-        }
-      }
-    } catch (err) {
-      setError('Failed to send email code');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleWebAuthn = async () => {
-    try {
-      setLoading(true);
-      // TODO: Implement WebAuthn verification
-      // const response = await mfaService.verifyWebAuthn({ action });
-      console.log('Starting WebAuthn verification...');
-      
-      // Mock WebAuthn success
-      setTimeout(() => {
-        onSuccess();
-      }, 2000);
-    } catch (err) {
-      setError('WebAuthn verification failed');
-      setLoading(false);
-    }
-  };
-
+  // ========================================
+  // UI HELPER FUNCTIONS
+  // ========================================
   const getMethodIcon = (method: string) => {
     switch (method) {
       case 'EMAIL':
@@ -198,7 +417,7 @@ const MfaVerification: React.FC<MfaVerificationProps> = ({
       case 'WEBAUTHN':
         return (
           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1721 9z" />
           </svg>
         );
       case 'BACKUP_CODES':
@@ -207,10 +426,10 @@ const MfaVerification: React.FC<MfaVerificationProps> = ({
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
           </svg>
         );
-        case 'PASSWORD':
+      case 'PASSWORD':
         return (
           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1721 9z" />
           </svg>
         );
       default:
@@ -230,7 +449,7 @@ const MfaVerification: React.FC<MfaVerificationProps> = ({
         return 'Security Key';
       case 'BACKUP_CODES':
         return 'Backup Codes';
-       case 'PASSWORD':
+      case 'PASSWORD':
         return 'Account Password';
       default:
         return method;
@@ -240,7 +459,7 @@ const MfaVerification: React.FC<MfaVerificationProps> = ({
   const getMethodDescription = (method: string) => {
     switch (method) {
       case 'EMAIL':
-        return 'Enter the 6-digit code sent to your email';
+        return `Enter the 6-digit code sent to your email${isLoginAction ? ' for device verification' : ''}`;
       case 'TOTP':
       case 'AUTHENTICATOR_APP':
         return 'Enter the 6-digit code from your authenticator app';
@@ -260,7 +479,7 @@ const MfaVerification: React.FC<MfaVerificationProps> = ({
     
     switch (action) {
       case 'login':
-        return 'Two-Factor Authentication Required';
+        return 'Device Verification Required';
       case 'password_reset':
         return 'Verify Identity for Password Reset';
       case 'security_settings':
@@ -277,7 +496,7 @@ const MfaVerification: React.FC<MfaVerificationProps> = ({
     
     switch (action) {
       case 'login':
-        return 'Please complete two-factor authentication to access your account.';
+        return 'This is your first login on a new device. Please complete verification to access your account.';
       case 'password_reset':
         return 'For security purposes, please verify your identity before resetting your password.';
       case 'security_settings':
@@ -289,6 +508,9 @@ const MfaVerification: React.FC<MfaVerificationProps> = ({
     }
   };
 
+  // ========================================
+  // LOADING & ERROR STATES
+  // ========================================
   if (loading && !mfaSettings) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -308,9 +530,13 @@ const MfaVerification: React.FC<MfaVerificationProps> = ({
     );
   }
 
+  // ========================================
+  // MAIN RENDER
+  // ========================================
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
       <div className="max-w-md w-full bg-white rounded-xl shadow-xl p-8">
+        {/* Header */}
         <div className="text-center mb-8">
           <div className="mx-auto w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mb-4">
             <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -319,8 +545,12 @@ const MfaVerification: React.FC<MfaVerificationProps> = ({
           </div>
           <h1 className="text-2xl font-bold text-gray-900 mb-2">{getActionTitle()}</h1>
           <p className="text-gray-600 text-sm">{getActionDescription()}</p>
+          {isLoginAction && username && (
+            <p className="text-gray-500 text-xs mt-2">Signed in as: <span className="font-medium">{username}</span></p>
+          )}
         </div>
 
+        {/* Error Message */}
         {error && (
           <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4">
             <p className="text-red-600 text-sm">{error}</p>
@@ -339,7 +569,7 @@ const MfaVerification: React.FC<MfaVerificationProps> = ({
             </div>
           </div>
 
-          {/* Verification Input based on method */}
+          {/* Verification Input */}
           {currentMethod === 'WEBAUTHN' ? (
             <button
               onClick={handleWebAuthn}
@@ -367,7 +597,7 @@ const MfaVerification: React.FC<MfaVerificationProps> = ({
                   <div className="text-sm">
                     <p className="text-amber-800 font-medium">Security Notice</p>
                     <p className="text-amber-700 mt-1">
-                      Using password authentication reduces your account security. We recommend setting up proper two-factor authentication methods.
+                      Using password authentication reduces your account security.
                     </p>
                   </div>
                 </div>
@@ -406,27 +636,41 @@ const MfaVerification: React.FC<MfaVerificationProps> = ({
         {/* Alternative Methods */}
         {availableMethods.length > 1 && (
           <div className="border-t pt-6">
-            <p className="text-sm text-gray-600 mb-4">Having trouble? Try another method:</p>
+            <p className="text-sm text-gray-600 mb-4">
+              Having trouble? Try another method:
+            </p>
             <div className="space-y-2">
               {availableMethods
                 .filter(method => method !== currentMethod)
+                .sort((a, b) => {
+                  if (a === 'PASSWORD') return 1;
+                  if (b === 'PASSWORD') return -1;
+                  return 0;
+                })
                 .map((method) => (
                   <button
                     key={method}
                     onClick={() => switchMethod(method)}
-                    className="w-full flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-md border border-gray-200"
+                    className={`w-full flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-md border border-gray-200 ${
+                      method === 'PASSWORD' ? 'border-amber-200 bg-amber-50' : ''
+                    }`}
                   >
-                    <div className="w-6 h-6 text-gray-500 mr-3">
+                    <div className={`w-6 h-6 text-gray-500 mr-3 ${method === 'PASSWORD' ? 'text-amber-600' : ''}`}>
                       {getMethodIcon(method)}
                     </div>
-                    <span>{getMethodLabel(method)}</span>
+                    <div className="flex-1 text-left">
+                      <span className={method === 'PASSWORD' ? 'text-amber-800' : ''}>{getMethodLabel(method)}</span>
+                      {method === 'PASSWORD' && (
+                        <p className="text-xs text-amber-700 mt-1">Last resort</p>
+                      )}
+                    </div>
                   </button>
                 ))}
             </div>
           </div>
         )}
 
-        {/* Resend/Help actions */}
+        {/* Resend Email Code */}
         {currentMethod === 'EMAIL' && (
           <div className="mt-4 text-center">
             <button
@@ -439,7 +683,7 @@ const MfaVerification: React.FC<MfaVerificationProps> = ({
           </div>
         )}
 
-        {/* Cancel option */}
+        {/* Cancel */}
         {onCancel && (
           <div className="mt-6 text-center">
             <button
@@ -456,144 +700,3 @@ const MfaVerification: React.FC<MfaVerificationProps> = ({
 };
 
 export { MfaVerification };
-
-// Usage Examples Component
-const MfaUsageExamples: React.FC = () => {
-  const [showLoginMfa, setShowLoginMfa] = useState(false);
-  const [showPasswordResetMfa, setShowPasswordResetMfa] = useState(false);
-  const [showSecurityMfa, setShowSecurityMfa] = useState(false);
-
-  if (showLoginMfa) {
-    return (
-      <MfaVerification
-        action="login"
-        onSuccess={() => {
-          alert('Login successful!');
-          setShowLoginMfa(false);
-          // Navigate to dashboard
-        }}
-        onCancel={() => setShowLoginMfa(false)}
-      />
-    );
-  }
-
-  if (showPasswordResetMfa) {
-    return (
-      <MfaVerification
-        action="password_reset"
-        title="Reset Password Verification"
-        description="Please verify your identity before we allow you to reset your password."
-        onSuccess={() => {
-          alert('Verification successful! You can now reset your password.');
-          setShowPasswordResetMfa(false);
-          // Navigate to password reset form
-        }}
-        onCancel={() => setShowPasswordResetMfa(false)}
-      />
-    );
-  }
-
-  if (showSecurityMfa) {
-    return (
-      <MfaVerification
-        action="security_settings"
-        onSuccess={() => {
-          alert('Security settings access granted!');
-          setShowSecurityMfa(false);
-          // Navigate to security settings
-        }}
-        onCancel={() => setShowSecurityMfa(false)}
-      />
-    );
-  }
-
-  return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-8">MFA Verification System Demo</h1>
-        
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          <div className="bg-white p-6 rounded-lg shadow">
-            <h3 className="text-lg font-medium text-gray-900 mb-2">Login MFA</h3>
-            <p className="text-sm text-gray-600 mb-4">
-              Verify identity for new device login
-            </p>
-            <button
-              onClick={() => setShowLoginMfa(true)}
-              className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700"
-            >
-              Trigger Login MFA
-            </button>
-          </div>
-
-          <div className="bg-white p-6 rounded-lg shadow">
-            <h3 className="text-lg font-medium text-gray-900 mb-2">Password Reset MFA</h3>
-            <p className="text-sm text-gray-600 mb-4">
-              Verify identity before password reset
-            </p>
-            <button
-              onClick={() => setShowPasswordResetMfa(true)}
-              className="w-full bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700"
-            >
-              Trigger Password Reset MFA
-            </button>
-          </div>
-
-          <div className="bg-white p-6 rounded-lg shadow">
-            <h3 className="text-lg font-medium text-gray-900 mb-2">Security Settings MFA</h3>
-            <p className="text-sm text-gray-600 mb-4">
-              Verify identity for security changes
-            </p>
-            <button
-              onClick={() => setShowSecurityMfa(true)}
-              className="w-full bg-purple-600 text-white py-2 px-4 rounded-md hover:bg-purple-700"
-            >
-              Trigger Security MFA
-            </button>
-          </div>
-        </div>
-
-        <div className="mt-12 bg-white p-6 rounded-lg shadow">
-          <h2 className="text-xl font-bold text-gray-900 mb-4">Implementation Notes</h2>
-          <div className="prose text-sm text-gray-600">
-            <h3 className="font-semibold text-gray-900">API Calls to Implement:</h3>
-            <ul className="list-disc list-inside space-y-1 mt-2">
-              <li><code>loadMfaSettings()</code> - Get user's MFA configuration</li>
-              <li><code>sendEmailCode()</code> - Send verification code via email</li>
-              <li><code>verifyCode()</code> - Verify entered code for any method</li>
-              <li><code>verifyWebAuthn()</code> - Handle WebAuthn verification</li>
-            </ul>
-            
-            <h3 className="font-semibold text-gray-900 mt-4">Key Features:</h3>
-            <ul className="list-disc list-inside space-y-1 mt-2">
-              <li>Primary method prioritization based on mfaPrimaryMethod</li>
-              <li>Fallback to alternative methods when primary is unavailable</li>
-              <li>Contextual titles and descriptions based on action type</li>
-              <li>Loading states and error handling</li>
-              <li>Responsive design with consistent styling</li>
-            </ul>
-            
-            <h3 className="font-semibold text-gray-900 mt-4">Usage:</h3>
-            <pre className="bg-gray-100 p-2 rounded text-xs overflow-x-auto">
-{`// Login scenario
-<MfaVerification
-  action="login"
-  onSuccess={() => router.push('/dashboard')}
-  onCancel={() => router.push('/login')}
-/>
-
-// Password reset scenario
-<MfaVerification
-  action="password_reset"
-  onSuccess={() => router.push('/reset-password')}
-  onCancel={() => router.push('/forgot-password')}
-/>`}
-            </pre>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-export default MfaUsageExamples;

@@ -79,7 +79,7 @@ const getMFASettings = createAsyncThunk(
     'user/mfaSettings',
     async ({ option }: { option?: object }, { rejectWithValue }) => {
         try {
-            const response = await mfaSettingServices.getMFASetting(option)
+            const response = await mfaSettingServices.getMFASetting({username: null, password: null}, option)
             console.log("MFA Settings fetched: ", response.data)
             if (response.success) {
                 setItemWithKey(MFA_SETTINGS_KEY, response.data)
