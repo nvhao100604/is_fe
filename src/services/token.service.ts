@@ -18,8 +18,9 @@ import api from "@/config/axios"
 
 // export const tokenService = new TokenService()
 
-const refreshToken = () => {
-    return api.post('/tokens/refresh-token', {}, { withCredentials: true });
+const refreshToken = async () => {
+    const response = await api.post('/tokens/refresh-token', {}, { withCredentials: true })
+    return response.data
 };
 
 export const tokenService = { refreshToken }

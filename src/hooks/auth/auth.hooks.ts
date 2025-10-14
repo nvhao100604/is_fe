@@ -1,6 +1,6 @@
 'use client'
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
-import { getCurrentUser, getMFASettings, login, logout, updateMFASettings } from "@/redux/slices/authSlices";
+import { getCurrentUser, getMFASettings, login, logout, refreshAccessToken, updateMFASettings } from "@/redux/slices/authSlices";
 import { TOASTIFY_ERROR, TOASTIFY_SUCCESS, useToastify } from "@/store/Toastify";
 import { LoginRequestDTO } from "@/types/request/auth.request.dto";
 import { useRouter } from "next/navigation";
@@ -13,9 +13,10 @@ const useAuthAccount = () => {
     const dispatch = useAppDispatch()
 
     useEffect(() => {
-        if (auth.isAuthenticated && !auth.account) {
+        if (auth.isAuthenticated) {
             console.log("Fetching current user...")
             // get current user
+            dispatch(refreshAccessToken())
             dispatch(getCurrentUser())
         }
     }, [])
@@ -61,7 +62,7 @@ const useGetMFASettings = (option?: object) => {
 
     const dispatch = useAppDispatch()
     useEffect(() => {
-        if (!auth.mfaSettings && auth.tokens) {
+        if (!auth.mfaSettings && auth.accessTokens) {
             dispatch(getMFASettings({ option }))
             console.log("Fetching MFA Settings...")
         }

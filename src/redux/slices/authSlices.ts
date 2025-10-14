@@ -3,6 +3,7 @@ import { ACCESS_TOKEN_KEY, IS_AUTHENTICATED, MFA_SETTINGS_KEY, REFRESH_TOKEN_KEY
 import { accountServices } from '@/services/account.service';
 import { authServices } from '@/services/auth.service'
 import { mfaSettingServices } from '@/services/mfa-setting.service';
+import { tokenService } from '@/services/token.service';
 import { LoginRequestDTO } from '@/types/request/auth.request.dto'
 import { AccountResponseDTO, tempAccount } from '@/types/response/auth.response.dto';
 import { MFASettingResponseDTO } from '@/types/response/mfasetting.response.dto';
@@ -17,7 +18,7 @@ export interface AuthTokens {
 
 export interface AuthState {
     account: AccountResponseDTO;
-    tokens: AuthTokens | null;
+    accessTokens: string | null;
     isAuthenticated: boolean;
     isLoading: boolean;
     errors: any,
@@ -25,8 +26,8 @@ export interface AuthState {
 }
 
 const initialState: AuthState = {
-    account: getItemWithKey(USER_KEY) || tempAccount,
-    tokens: null,
+    account: tempAccount,
+    accessTokens: null,
     isAuthenticated: getItemWithKey(IS_AUTHENTICATED),
     isLoading: false,
     errors: null,
@@ -39,11 +40,26 @@ const login = createAsyncThunk(
         try {
             const response = await authServices.authLogIn(userData)
             if (response.success) {
-                // console.log(response.data);
-                clearAllKey();
+                clearAllKey()
+                return response.data.token
+            }
+        } catch (error) {
+            if (error instanceof Error) {
+                return rejectWithValue(error.message);
+            }
+            return rejectWithValue("An unknown error occurred");
+        }
+    }
+)
 
-                setItemWithKey(IS_AUTHENTICATED, true);
-                setItemWithKey(ACCESS_TOKEN_KEY, response.data.token); // Giả sử DTO có trường accessToken
+const refreshAccessToken = createAsyncThunk(
+    'user/refreshAccessToken',
+    async (_, { rejectWithValue }) => {
+        try {
+            const response = await tokenService.refreshToken()
+            if (response.success) {
+                console.log("check response", response)
+                // return response.data
             }
         } catch (error) {
             if (error instanceof Error) {
@@ -59,9 +75,9 @@ const getCurrentUser = createAsyncThunk(
     async (_, { rejectWithValue }) => {
         try {
             const response = await accountServices.getAccounts()
-            // console.log("check response: ", response)
+            console.log("check response: ", response.data)
             if (response.success) {
-                setItemWithKey(USER_KEY, response.data)
+                // setItemWithKey(USER_KEY, response.data)
                 return response.data
             }
             else return response.message
@@ -78,11 +94,11 @@ const getMFASettings = createAsyncThunk(
     'user/mfaSettings',
     async ({ option }: { option?: object }, { rejectWithValue }) => {
         try {
-            const response = await mfaSettingServices.getMFASetting({username: null, password: null}, option)
+            const response = await mfaSettingServices.getMFASetting({ username: null, password: null }, option)
             console.log("MFA Settings fetched: ", response.data)
             if (response.success) {
-                setItemWithKey(MFA_SETTINGS_KEY, response.data)
-                // await new Promise(resolve => setTimeout(resolve, 1500))
+                // setItemWithKey(MFA_SETTINGS_KEY, response.data)
+                await new Promise(resolve => setTimeout(resolve, 1500))
                 return response.data
             } else return response.message
         } catch (error) {
@@ -119,12 +135,15 @@ const authSlice = createSlice({
             state.isAuthenticated = false
             state.errors = null
             state.isLoading = false
-            state.tokens = null
+            state.accessTokens = null
             clearAllKey()
             document.cookie = 'accessToken=; Path=/; Max-Age=0';
         },
         incrementByAmount: (state, action: PayloadAction<number>) => {
         },
+        setAccessToken: (state, action: PayloadAction<string>) => {
+            state.accessTokens = action.payload
+        }
     },
     extraReducers: (builder) => {
         builder
@@ -147,14 +166,26 @@ const authSlice = createSlice({
                 state.isLoading = true
                 state.errors = null
             })
-            .addCase(login.fulfilled, (state) => {
+            .addCase(login.fulfilled, (state, action: PayloadAction<any>) => {
                 state.isAuthenticated = true
+                // console.log("payload check: ", action.payload)
+                setItemWithKey(IS_AUTHENTICATED, true)
+                state.accessTokens = action.payload
                 state.errors = null
             })
             .addCase(login.rejected, (state, action: PayloadAction<any>) => {
                 state.errors = action.payload
                 state.isAuthenticated = false
                 state.isLoading = false
+            })
+            .addCase(refreshAccessToken.pending, (state) => {
+
+            })
+            .addCase(refreshAccessToken.fulfilled, (state) => {
+
+            })
+            .addCase(refreshAccessToken.rejected, (state) => {
+
             })
             .addCase(getMFASettings.pending, (state) => {
                 state.isLoading = true
@@ -185,6 +216,6 @@ const authSlice = createSlice({
 })
 
 // Action creators are generated for each case reducer function
-export { login, getCurrentUser, getMFASettings, updateMFASettings, }
-export const { logout, incrementByAmount } = authSlice.actions
+export { login, refreshAccessToken, getCurrentUser, getMFASettings, updateMFASettings, }
+export const { logout, incrementByAmount, setAccessToken } = authSlice.actions
 export default authSlice.reducer
