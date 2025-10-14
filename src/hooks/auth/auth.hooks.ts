@@ -57,19 +57,17 @@ const useLogout = () => {
 }
 
 const useGetMFASettings = (option?: object) => {
-    const mfaSetting = useAppSelector(state => state.auth.mfaSettings)
-    const isLoading = useAppSelector(state => state.auth.isLoading)
-    const errors = useAppSelector(state => state.auth.errors)
+    const auth = useAppSelector(state => state.auth)
 
     const dispatch = useAppDispatch()
     useEffect(() => {
-        if (!mfaSetting) {
+        if (!auth.mfaSettings && auth.tokens) {
             dispatch(getMFASettings({ option }))
             console.log("Fetching MFA Settings...")
         }
-    }, [mfaSetting])
+    }, [])
 
-    return { mfaSetting, isLoading, errors }
+    return { mfaSettings: auth.mfaSettings, isLoading: auth.isLoading, errors: auth.errors }
 }
 
 const useMFASettings = () => useAppSelector(state => state.auth.mfaSettings)
