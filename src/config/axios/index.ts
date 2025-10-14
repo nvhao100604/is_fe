@@ -69,7 +69,7 @@ api.interceptors.response.use(
 
             try {
                 const response = await tokenService.refreshToken();
-                const newAccessToken = response.data.data.accessToken;
+                const newAccessToken = response.data.token;
                 console.log("refresh token check: ", newAccessToken)
                 store.dispatch(setAccessToken(newAccessToken))
                 api.defaults.headers.common['Authorization'] = 'Bearer ' + newAccessToken;
