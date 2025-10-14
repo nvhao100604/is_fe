@@ -50,8 +50,10 @@ const processQueue = (error: any, token = null) => {
 api.interceptors.response.use(
     (response) => response,
     async (error) => {
+        console.log("error check: ", error)
         const originalRequest = error.config;
         if (error.response?.status === 401 && !originalRequest._retry) {
+            console.log("error check config: ", originalRequest)
             if (isRefreshing) {
                 return new Promise(function (resolve, reject) {
                     failedQueue.push({ resolve, reject });

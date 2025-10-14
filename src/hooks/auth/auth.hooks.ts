@@ -13,6 +13,7 @@ const useAuthAccount = () => {
     const dispatch = useAppDispatch()
 
     useEffect(() => {
+        console.log("check double call API")
         if (auth.isAuthenticated) {
             console.log("Fetching current user...")
             // get current user
