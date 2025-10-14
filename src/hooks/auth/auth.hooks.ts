@@ -1,6 +1,6 @@
 'use client'
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
-import { getCurrentUser, getMFASettings, login, logout, refreshAccessToken, updateMFASettings } from "@/redux/slices/authSlices";
+import { getCurrentUser, getMFASettings, login, logout, refreshAccessToken, refreshAndGetUser, updateMFASettings } from "@/redux/slices/authSlices";
 import { TOASTIFY_ERROR, TOASTIFY_SUCCESS, useToastify } from "@/store/Toastify";
 import { LoginRequestDTO } from "@/types/request/auth.request.dto";
 import { useRouter } from "next/navigation";
@@ -13,14 +13,9 @@ const useAuthAccount = () => {
     const dispatch = useAppDispatch()
 
     useEffect(() => {
-        console.log("check double call API")
-        if (auth.isAuthenticated) {
-            console.log("Fetching current user...")
-            // get current user
-            dispatch(refreshAccessToken())
-            dispatch(getCurrentUser())
-        }
-    }, [])
+        if (auth.isAuthenticated && auth.accessTokens === null) dispatch(refreshAccessToken())
+        if (auth.accessTokens) dispatch(getCurrentUser())
+    }, [auth.accessTokens])
     return auth
 }
 

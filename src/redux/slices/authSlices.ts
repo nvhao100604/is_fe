@@ -10,6 +10,7 @@ import { MFASettingResponseDTO } from '@/types/response/mfasetting.response.dto'
 import { clearAllKey, getItemWithKey, setItemWithKey } from '@/utils';
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit'
 import type { PayloadAction } from '@reduxjs/toolkit'
+import { useAppDispatch, useAppSelector } from '../hooks';
 
 export interface AuthTokens {
     token: string;
@@ -58,8 +59,8 @@ const refreshAccessToken = createAsyncThunk(
         try {
             const response = await tokenService.refreshToken()
             if (response.success) {
-                console.log("check response", response)
-                // return response.data
+                // console.log("check response", response)
+                return response.data.token
             }
         } catch (error) {
             if (error instanceof Error) {
@@ -75,9 +76,7 @@ const getCurrentUser = createAsyncThunk(
     async (_, { rejectWithValue }) => {
         try {
             const response = await accountServices.getAccounts()
-            console.log("check response: ", response.data)
             if (response.success) {
-                // setItemWithKey(USER_KEY, response.data)
                 return response.data
             }
             else return response.message
@@ -95,7 +94,7 @@ const getMFASettings = createAsyncThunk(
     async ({ option }: { option?: object }, { rejectWithValue }) => {
         try {
             const response = await mfaSettingServices.getMFASetting({ username: null, password: null }, option)
-            console.log("MFA Settings fetched: ", response.data)
+            // console.log("MFA Settings fetched: ", response.data)
             if (response.success) {
                 // setItemWithKey(MFA_SETTINGS_KEY, response.data)
                 await new Promise(resolve => setTimeout(resolve, 1500))
@@ -179,13 +178,18 @@ const authSlice = createSlice({
                 state.isLoading = false
             })
             .addCase(refreshAccessToken.pending, (state) => {
-
+                state.isLoading = true
+                state.errors = null
             })
-            .addCase(refreshAccessToken.fulfilled, (state) => {
-
+            .addCase(refreshAccessToken.fulfilled, (state, action: PayloadAction<string>) => {
+                state.isLoading = false
+                state.errors = null
+                // console.log("after refresh token: " + action.payload)
+                state.accessTokens = action.payload
             })
-            .addCase(refreshAccessToken.rejected, (state) => {
-
+            .addCase(refreshAccessToken.rejected, (state, action: PayloadAction<any>) => {
+                state.isLoading = false
+                state.errors = action.payload
             })
             .addCase(getMFASettings.pending, (state) => {
                 state.isLoading = true

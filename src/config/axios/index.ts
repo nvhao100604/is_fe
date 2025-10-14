@@ -1,9 +1,16 @@
 import { API_BASE_URL, DEFAULT_TIMEOUT, NO_AUTH_ENDPOINTS, RESPONSE_DELAY } from "@/constants";
 import { setAccessToken } from "@/redux/slices/authSlices";
-import { store } from "@/redux/store";
 import { tokenService } from "@/services/token.service";
 import { clearAllKey } from "@/utils";
 import axios from "axios";
+
+let storeDispatch: any = null;
+let storeGetState: any = null;
+
+const setupInterceptors = (dispatch: any, getState: any) => {
+    storeDispatch = dispatch;
+    storeGetState = getState;
+};
 
 const api = axios.create({
     baseURL: API_BASE_URL,
@@ -18,8 +25,8 @@ api.interceptors.request.use(config => {
     const requiresAuth = !NO_AUTH_ENDPOINTS.some(endpoint => config.url?.includes(endpoint));
 
     if (requiresAuth) {
-        const token = store.getState().auth.accessTokens;
-        console.log("token check: ", token)
+        const token = storeGetState().auth.accessTokens;
+        // console.log("token check: ", token)
         if (token) {
             config.headers.Authorization = `Bearer ${token}`;
         }
@@ -50,16 +57,16 @@ const processQueue = (error: any, token = null) => {
 api.interceptors.response.use(
     (response) => response,
     async (error) => {
-        console.log("error check: ", error)
+        // console.log("error check: ", error)
         const originalRequest = error.config;
         if (error.response?.status === 401 && !originalRequest._retry) {
-            console.log("error check config: ", originalRequest)
+            // console.log("error check config: ", originalRequest)
             if (isRefreshing) {
                 return new Promise(function (resolve, reject) {
                     failedQueue.push({ resolve, reject });
                 }).then(token => {
                     originalRequest.headers['Authorization'] = 'Bearer ' + token;
-                    console.log("refresh token check: ", token)
+                    // console.log("refresh token check: ", token)
                     return api(originalRequest);
                 }).catch(err => {
                     return Promise.reject(err);
@@ -72,8 +79,8 @@ api.interceptors.response.use(
             try {
                 const response = await tokenService.refreshToken();
                 const newAccessToken = response.data.token;
-                console.log("refresh token check: ", newAccessToken)
-                store.dispatch(setAccessToken(newAccessToken))
+                // console.log("refresh token check: ", newAccessToken)
+                storeDispatch(setAccessToken(newAccessToken))
                 api.defaults.headers.common['Authorization'] = 'Bearer ' + newAccessToken;
                 processQueue(null, newAccessToken);
 
@@ -92,6 +99,5 @@ api.interceptors.response.use(
     }
 );
 
-
-
+export { setupInterceptors }
 export default api
