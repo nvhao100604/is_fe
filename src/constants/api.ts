@@ -9,6 +9,10 @@ const BASE_TRUST_DEVICE_URL = '/trust-devices'
 const BASE_USER_URL = '/user'
 const DEFAULT_TIMEOUT = 8 * 100000
 const RESPONSE_DELAY = 2 * 1000
+const NO_AUTH_ENDPOINTS = [
+    '/auth/sign-in',
+    '/tokens/refresh-token' 
+];
 
 export {
   API_BASE_URL,
@@ -20,5 +24,6 @@ export {
   BASE_TRUST_DEVICE_URL,
   BASE_USER_URL,
   DEFAULT_TIMEOUT,
-  RESPONSE_DELAY
+  RESPONSE_DELAY,
+  NO_AUTH_ENDPOINTS
 }

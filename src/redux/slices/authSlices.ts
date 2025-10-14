@@ -40,11 +40,10 @@ const login = createAsyncThunk(
             const response = await authServices.authLogIn(userData)
             if (response.success) {
                 // console.log(response.data);
-                clearAllKey()
-                setItemWithKey(IS_AUTHENTICATED, true)
-                setItemWithKey(ACCESS_TOKEN_KEY, response.data.token)
-                setItemWithKey(REFRESH_TOKEN_KEY, response.data.refreshToken)
-                document.cookie = `accessToken=${response.data.token}; Path=/; SameSite=Strict`
+                clearAllKey();
+
+                setItemWithKey(IS_AUTHENTICATED, true);
+                setItemWithKey(ACCESS_TOKEN_KEY, response.data.token); // Giả sử DTO có trường accessToken
             }
         } catch (error) {
             if (error instanceof Error) {
