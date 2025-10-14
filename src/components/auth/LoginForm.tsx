@@ -8,8 +8,11 @@ import { SocialAuthButtons } from './SocialAuthButtons';
 import { validatePassword } from '../../utils/validation.util';
 import { LoginRequestDTO } from '../../types/request/auth.request.dto';
 import { useAuth, useLogin } from '@/hooks/auth/auth.hooks';
+import { authServices } from '@/services/auth.service';
+import { MfaVerification } from './MfaVerification';
 
 export const LoginForm: React.FC = () => {
+    const [showMfaVerification, setShowMfaVerification] = useState(false);
   const router = useRouter();
   const auth = useAuth()
   const login = useLogin()
@@ -46,12 +49,28 @@ export const LoginForm: React.FC = () => {
     return Object.keys(newErrors).length === 0;
   };
 
+  const handleMfaVerificationSuccess = () =>{
+    login(formData)
+  }
+
+   const handleMfaVerificationCancel = () => {
+    setShowMfaVerification(false);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateForm()) return;
-    login(formData)
-    // const result = await authServices.authLogIn(formData);
-    // console.log('Login result:', result);
+    //login(formData)
+    const result = await authServices.authLogIn(formData);
+    console.log('Login result:', result);
+    if(result.success){
+      if(result.data.mfaRequired){
+        console.log('require true')
+        setShowMfaVerification(true)
+      }else{
+        login(formData)
+      }
+    }
 
     // if (result && result.mfaRequired) {
     //   router.push(result.url);
@@ -59,6 +78,19 @@ export const LoginForm: React.FC = () => {
     //   router.push('/dashboard');
     // }
   };
+
+    if (showMfaVerification) {
+return (
+          <MfaVerification
+        action="login"
+        title="Verify login for new divce"
+        description={`Please verify your identity before login.`}
+        onSuccess={handleMfaVerificationSuccess}
+        onCancel={handleMfaVerificationCancel}
+        username={formData.username}
+      />
+        )
+    }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">

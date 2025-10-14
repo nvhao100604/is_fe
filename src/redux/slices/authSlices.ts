@@ -40,11 +40,10 @@ const login = createAsyncThunk(
             const response = await authServices.authLogIn(userData)
             if (response.success) {
                 // console.log(response.data);
-                clearAllKey()
-                setItemWithKey(IS_AUTHENTICATED, true)
-                setItemWithKey(ACCESS_TOKEN_KEY, response.data.token)
-                setItemWithKey(REFRESH_TOKEN_KEY, response.data.refreshToken)
-                document.cookie = `accessToken=${response.data.token}; Path=/; SameSite=Strict`
+                clearAllKey();
+
+                setItemWithKey(IS_AUTHENTICATED, true);
+                setItemWithKey(ACCESS_TOKEN_KEY, response.data.token); // Giả sử DTO có trường accessToken
             }
         } catch (error) {
             if (error instanceof Error) {
@@ -79,7 +78,7 @@ const getMFASettings = createAsyncThunk(
     'user/mfaSettings',
     async ({ option }: { option?: object }, { rejectWithValue }) => {
         try {
-            const response = await mfaSettingServices.getMFASetting(option)
+            const response = await mfaSettingServices.getMFASetting({username: null, password: null}, option)
             console.log("MFA Settings fetched: ", response.data)
             if (response.success) {
                 setItemWithKey(MFA_SETTINGS_KEY, response.data)
