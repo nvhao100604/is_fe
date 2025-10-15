@@ -98,11 +98,11 @@ export const TOTPSetup: React.FC<TOTPSetupProps> = ({ onSuccess, onCancel }) => 
       const otpVerify: TOTPVerificationDTO = { code: otpValue };
 
       // TODO: Call API to verify and enable TOTP
-      const response = await totpService.verifyToTp(otpVerify);
+      const response = await totpService.verifyRegisterTOTP(otpVerify);
       // 
       if (response.success) {
         toastify.notify('Verify is Successfully!', TOASTIFY_SUCCESS);
-        onSuccess?.();
+        router.push("/dashboard/setting");
       } else {
         toastify.notify('Verify is Failed!', TOASTIFY_ERROR);
         setErrorMessage(response.message || 'Verification failed');

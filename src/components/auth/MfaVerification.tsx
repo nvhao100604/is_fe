@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { mfaSettingServices } from '@/services/mfa-setting.service';
 import { authServices } from '@/services/auth.service';
+import { EmailVerification } from '@/services/mail.services';
 
 // Types
 interface MfaSettings {
@@ -66,7 +67,7 @@ const MfaVerification: React.FC<MfaVerificationProps> = ({
         }
       } else {
         // FOR OTHER ACTIONS: Send notification email
-        await authServices.sendEmailNotificationVerify();
+        //await authServices.sendEmailNotificationVerify();
         console.log('TODO: Send notification email for', action);
       }
 
@@ -95,6 +96,12 @@ const MfaVerification: React.FC<MfaVerificationProps> = ({
       if (response.success) {
         setMfaSettings(response.data);
         setCurrentMethod(response.data.mfaPrimaryMethod);
+        if(response.data.mfaPrimaryMethod === 'EMAIL'){
+          if(action !== 'login'){
+          await authServices.sendEmailNotificationVerify();
+          console.log('TODO: Send notification email for', action);
+          }
+        }
 
         // Build available methods based on action type
         const methods = buildAvailableMethods(response.data, isLoginAction);
@@ -144,6 +151,19 @@ const MfaVerification: React.FC<MfaVerificationProps> = ({
         case 'EMAIL':
           const emailResponse = await handleEmailVerification();
           setResponse(emailResponse)
+          if(emailResponse && emailResponse.success) {
+              if(action === 'login'){ 
+                //localStorage.setItem('accessToken', emailResponse.token);
+                // localStorage.setItem('refreshToken', emailResponse.refreshToken);
+                //document.cookie = `accessToken=${emailResponse.token}; Path=/; SameSite=Strict`;
+              }else{
+                // For non-login actions, just call onSuccess
+                console.log("Email verification success for non-login action");
+                if(emailResponse.success){
+                  onSuccess();
+                }
+              }
+          }
           break;
 
         case 'TOTP':
@@ -219,12 +239,20 @@ const MfaVerification: React.FC<MfaVerificationProps> = ({
       };
     } else {
       // TODO: API CALL - General email verification
-      const payload = {
+      const payload: EmailVerification = {
         email: null,
         otp: verificationCode,
       };
       console.log('TODO: General email verification:', payload);
-      // return await mailServices.verifySignUp(payload);
+      const ressponse = await authServices.verifyEmail(payload);
+      console.log('Email verification response:', ressponse);
+      if(ressponse && ressponse.success) {
+        if(ressponse.data) {
+          return { success: true, data: true };
+        } else {
+          return { success: false, message: 'Incorrect email code' };
+        }
+      }
 
       // Mock response
       return { success: true, data: true };

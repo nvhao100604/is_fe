@@ -43,7 +43,9 @@ const MfaSettingsPage = () => {
   }
 
   const handleDisableEmail = async () => {
-    console.log('Disable Email MFA');
+    requirePassword(() => {
+      handleMfaSettingDisableEmail();
+    });
   }
 
   const handleDisableWebAuthn = async () => {
@@ -52,7 +54,13 @@ const MfaSettingsPage = () => {
 
   const handleDisableTOTP = async () => {
     requirePassword(() => {
-      console.log("Disable TOTP MFA");
+      handleMfaSettingDisableTOTP();
+    });
+  }
+
+  const handleViewBackupCodes = async () => {
+    requirePassword(() => {
+      router.push('/auth/mfa/backup-codes');
     });
   }
 
@@ -62,28 +70,31 @@ const MfaSettingsPage = () => {
   };
 
   const verifyPassword = async () => {
-    console.log("verify")
-    // try {
-    //   setErrorMessage("");
-    //   // gọi API verify password
-    //   const res = await authServices.verifyPassword({ password });
-    //   console.log(res);
-    //   if (!res.data) {
-    //     setErrorMessage("Password incorrect");
-    //     return;
-    //   }
-
-    //   // nếu đúng → chạy tiếp action đã lưu
-    //   if (pendingAction) {
-    //     await pendingAction();
-    //   }
-
-    //   setShowVerifyModal(false);
-    //   setPassword("");
-    //   setPendingAction(null);
-    // } catch (err) {
-    //   setErrorMessage("Something went wrong");
-    // }
+    console.log("verify password: ", password);
+    try {
+      setErrorMessage("");
+        const payload = {
+        password: password,
+      };
+      // gọi API verify password
+      const response = await authServices.verifyPassword(payload);
+      if (response && response.success) {
+        if (response.data) {
+          if (pendingAction) {
+                  await pendingAction();
+                  setShowVerifyModal(false);
+                  setPassword("");
+                  setPendingAction(null);
+                }
+        }else{
+          setErrorMessage("Password incorrect");
+          return;
+        }
+      }
+ 
+    } catch (err) {
+      setErrorMessage("Something went wrong");
+    }
   };
 
   const onSuccess = async () => {
@@ -133,7 +144,41 @@ const MfaSettingsPage = () => {
     );
   }
 
+  const handleMfaSettingDisableTOTP = async () => {
+    console.log("Disable TOTP MFA");
+    if (mfaSettings) {
+      if(mfaSettings.mfaTotpEnable === false || mfaSettings.mfaPrimaryMethod === 'TOTP'){
+        toastify.notify("Cannot disable TOTP as it is either already disabled or set as the primary method.", TOASTIFY_ERROR);
+        return;
+      }else{
+        const mfaTotpEnable = !mfaSettings.mfaTotpEnable;
+        updateMFASettings({
+          mfaId: mfaSettings.mfaId,
+          data: { ...mfaSettings, mfaTotpEnable: !mfaSettings.mfaTotpEnable },
+          option: { responseDelay: 0 }
+        })
+      }
+    }
+  }
 
+  const handleMfaSettingDisableEmail = async () => {
+    console.log("Disable Email MFA");
+    if (mfaSettings) {
+      if(mfaSettings.mfaEmailEnabled === false || mfaSettings.mfaPrimaryMethod === 'EMAIL'){
+        toastify.notify("Cannot disable Email as it is either already disabled or set as the primary method.", TOASTIFY_ERROR);
+        return;
+      }else{
+        const mfaEmailEnabled = !mfaSettings.mfaEmailEnabled;
+        updateMFASettings({
+          mfaId: mfaSettings.mfaId,
+          data: { ...mfaSettings, mfaEmailEnabled: !mfaSettings.mfaEmailEnabled },
+          option: { responseDelay: 0 }
+        })
+      }
+    }
+  }
+
+  
 
   const handleToggleMfa = async () => {
     // TODO: Implement toggle MFA functionality
@@ -265,7 +310,7 @@ const MfaSettingsPage = () => {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                   </svg>
                 </MethodBox>
-                <MethodBox mfaSetting={mfaSettings}
+                {/* <MethodBox mfaSetting={mfaSettings}
                   href={"/auth/mfa/setup-webauthn"}
                   label="Security Key (WebAuthn)"
                   description="Use hardware security keys or biometric authentication"
@@ -275,7 +320,7 @@ const MfaSettingsPage = () => {
                 ><svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
                   </svg>
-                </MethodBox>
+                </MethodBox> */}
               </div>
 
               {/* Backup Codes */}
@@ -288,10 +333,10 @@ const MfaSettingsPage = () => {
                     </p>
                   </div>
                   <button
-                    // onClick={handleViewBackupCodes}
+                    onClick={handleViewBackupCodes}
                     className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
                   >
-                    <Link href={"/auth/mfa/backup-codes"}>View Codes</Link>
+                    View Codes
                   </button>
                 </div>
               </div>

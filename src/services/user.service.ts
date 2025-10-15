@@ -2,7 +2,9 @@
 // import { BASE_USER_URL } from '../constants';
 // import { configRequest } from '@/config/api/config.api';
 
-// const BASE_URL = BASE_USER_URL;
+import api from "@/config/axios"
+
+const BASE_URL = "/user";
 
 // class UserService {
 //   async getCurrentUser(): Promise<UserDTO> {
@@ -13,4 +15,11 @@
 //   }
 // }
 
-// export const userService = new UserService();
+const updateUser = async (userUpdateDTO: any): Promise<any> => {
+    const response = await api.patch(`${BASE_URL}`, JSON.stringify(userUpdateDTO));
+    return response.data;
+}
+
+export const userService = {
+    updateUser
+}

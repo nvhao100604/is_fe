@@ -10,6 +10,11 @@ const registerToTp = async (): Promise<any> => {
     return response.data
 }
 
+const verifyRegisterTOTP = async (totp: TOTPVerificationDTO): Promise<any> => {
+    const response = await api.post("/totp/verify-register-totp", JSON.stringify(totp))
+    return response.data
+}
+
 const verifyToTp = async (totp: TOTPVerificationDTO): Promise<any> => {
     const response = await api.post("/totp/verify", JSON.stringify(totp))
     return response.data
@@ -17,5 +22,6 @@ const verifyToTp = async (totp: TOTPVerificationDTO): Promise<any> => {
 
 export const totpService = {
     registerToTp,
-    verifyToTp
+    verifyToTp,
+    verifyRegisterTOTP
 }

@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { mfaSettingServices } from '@/services/mfa-setting.service';
+import { backupCodeService } from '@/services/backupcode.service';
 
 const BackupCodesPage: React.FC = () => {
   const router = useRouter();
@@ -9,26 +10,30 @@ const BackupCodesPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [regenerating, setRegenerating] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [downloaded, setDownloaded] = useState(false);
 
   useEffect(() => {
-    const loadBackupCodes = async () => {
-      // try {
-      //    setLoading(true);
-      //   const response = await mfaSettingServices.getBackupCodes();
-      //   if (response.success) {
-      //     setCodes(response.data);
-      //   } else {
-      //     setError(response.message);
-      //   } 
-      // } catch (err) {
-      //   setError('Failed to load backup codes');
-      // } finally {
-      //   setLoading(false);
-      // }
-    };
+  
     loadBackupCodes();
   }, []);
+
+
+  const loadBackupCodes = async () => {
+      try {
+         setLoading(true);
+        const response = await backupCodeService.getBackupCodes();
+        if (response.success) {
+          setCodes(response.data);
+        } else {
+          setError(response.message);
+        } 
+      } catch (err) {
+        setError('Failed to load backup codes');
+      } finally {
+        setLoading(false);
+      }
+    };
 
   const handleRegenerate = async () => {
     if (!confirm('Are you sure? This will invalidate all existing backup codes.')) {
@@ -36,20 +41,42 @@ const BackupCodesPage: React.FC = () => {
     }
 
     try {
-      /* setRegenerating(true);
-      const response = await mfaSettingService.regenerateBackupCodes();
+      setRegenerating(true);
+      const response = await backupCodeService.generateBackupCodes();
       if (response.success) {
         setCodes(response.data);
         setDownloaded(false);
+        loadBackupCodes();
       } else {
         setError(response.message);
-      } */
+      }
     } catch (err) {
       setError('Failed to regenerate backup codes');
     } finally {
       setRegenerating(false);
     }
   };
+
+  const handleDelete = async () => {
+    if (!confirm('Are you sure? This will delete all existing backup codes.')) {
+      return;
+    }
+    try {
+      setDeleting(true);
+      const response = await backupCodeService.deleteBackupCodes();
+      if (response.success) {
+        setCodes([]);
+        setDownloaded(false);
+        loadBackupCodes();
+      } else {
+        setError(response.message);
+      }
+    } catch (err) {
+      setError('Failed to delete backup codes');
+    } finally {
+      setDeleting(false);
+    }
+  }
 
   const handleDownload = () => {
     const content = codes.map(code => code).join('\n');
@@ -130,18 +157,28 @@ const BackupCodesPage: React.FC = () => {
 
               <div>
                 <h3 className="text-lg font-medium text-gray-900 mb-4">Your Backup Codes</h3>
-                <div className="bg-gray-100 rounded-lg p-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    {codes.map((code, index) => (
-                      <div
-                        key={index}
-                        className="bg-white px-3 py-2 rounded border text-center font-mono text-sm"
-                      >
-                        {code}
-                      </div>
-                    ))}
+
+                {/* Bắt đầu kiểm tra điều kiện từ đây */}
+                {(codes && codes.length > 0) ? (
+                  // Nếu ĐIỀU KIỆN ĐÚNG (có codes), thì render ra danh sách
+                  <div className="bg-gray-100 rounded-lg p-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      {codes.map((code, index) => (
+                        <div
+                          key={index}
+                          className="bg-white px-3 py-2 rounded border text-center font-mono text-sm"
+                        >
+                          {code}
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                </div>
+                ) : (
+                  // Nếu ĐIỀU KIỆN SAI (codes là null/undefined/mảng rỗng), thì render ra thông báo
+                  <div className="bg-gray-100 rounded-lg p-4 text-center text-gray-500">
+                    <p>No backup codes are available.</p>
+                  </div>
+                )}
               </div>
 
               <div className="flex flex-col sm:flex-row gap-4">
@@ -174,6 +211,14 @@ const BackupCodesPage: React.FC = () => {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                   </svg>
                   {regenerating ? 'Regenerating...' : 'Regenerate'}
+                </button>
+
+                <button
+                  onClick={handleDelete}
+                  disabled={deleting}
+                  className="flex-1 flex justify-center items-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {deleting ? 'Deleting...' : 'Delete  '}
                 </button>
               </div>
 

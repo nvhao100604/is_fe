@@ -17,6 +17,7 @@ export interface AccountResponseDTO {
   accountLastLogin?: string;
   accountIsLocked?: boolean;
   accountCreatedAt?: string;
+  accountLockedTime?: string;
   user?: UserDTO;
 }
 
