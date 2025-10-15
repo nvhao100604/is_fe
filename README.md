@@ -29,3 +29,7 @@ npm install @reduxjs/toolkit
 ```bash
 npm install react-redux
 ```
+# SWR
+```bash
+npm install swr
+```

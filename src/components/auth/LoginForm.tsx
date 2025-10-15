@@ -12,7 +12,7 @@ import { authServices } from '@/services/auth.service';
 import { MfaVerification } from './MfaVerification';
 
 export const LoginForm: React.FC = () => {
-    const [showMfaVerification, setShowMfaVerification] = useState(false);
+  const [showMfaVerification, setShowMfaVerification] = useState(false);
   const router = useRouter();
   const auth = useAuth()
   const login = useLogin()
@@ -49,11 +49,11 @@ export const LoginForm: React.FC = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleMfaVerificationSuccess = () =>{
+  const handleMfaVerificationSuccess = () => {
     login(formData)
   }
 
-   const handleMfaVerificationCancel = () => {
+  const handleMfaVerificationCancel = () => {
     setShowMfaVerification(false);
   };
 
@@ -63,11 +63,11 @@ export const LoginForm: React.FC = () => {
     //login(formData)
     const result = await authServices.authLogIn(formData);
     console.log('Login result:', result);
-    if(result.success){
-      if(result.data.mfaRequired){
+    if (result.success) {
+      if (result.data.mfaRequired) {
         console.log('require true')
         setShowMfaVerification(true)
-      }else{
+      } else {
         login(formData)
       }
     }
@@ -79,18 +79,18 @@ export const LoginForm: React.FC = () => {
     // }
   };
 
-    if (showMfaVerification) {
-return (
-          <MfaVerification
+  if (showMfaVerification) {
+    return (
+      <MfaVerification
         action="login"
-        title="Verify login for new divce"
+        title="Verify login for new device"
         description={`Please verify your identity before login.`}
         onSuccess={handleMfaVerificationSuccess}
         onCancel={handleMfaVerificationCancel}
         username={formData.username}
       />
-        )
-    }
+    )
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">

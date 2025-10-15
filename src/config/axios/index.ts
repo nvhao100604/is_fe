@@ -1,5 +1,5 @@
 import { API_BASE_URL, DEFAULT_TIMEOUT, NO_AUTH_ENDPOINTS, RESPONSE_DELAY } from "@/constants";
-import { setAccessToken } from "@/redux/slices/authSlices";
+import { refreshAccessToken, setAccessToken } from "@/redux/slices/authSlices";
 import { tokenService } from "@/services/token.service";
 import { clearAllKey } from "@/utils";
 import axios from "axios";
@@ -26,7 +26,7 @@ api.interceptors.request.use(config => {
 
     if (requiresAuth) {
         const token = storeGetState().auth.accessTokens;
-        // console.log("token check: ", token)
+        console.log("token check: ", token)
         if (token) {
             config.headers.Authorization = `Bearer ${token}`;
         }

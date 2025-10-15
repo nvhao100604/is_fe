@@ -58,11 +58,11 @@ const useGetMFASettings = (option?: object) => {
 
     const dispatch = useAppDispatch()
     useEffect(() => {
-        if (!auth.mfaSettings && auth.accessTokens) {
+        if (auth.account.accountId && !auth.mfaSettings) {
             dispatch(getMFASettings({ option }))
             console.log("Fetching MFA Settings...")
         }
-    }, [])
+    }, [auth.account])
 
     return { mfaSettings: auth.mfaSettings, isLoading: auth.isLoading, errors: auth.errors }
 }
@@ -87,5 +87,5 @@ export {
     useLogin,
     useLogout,
     useGetMFASettings,
-    useUpdateMFASettings
+    useUpdateMFASettings,
 }

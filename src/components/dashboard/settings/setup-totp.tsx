@@ -16,7 +16,7 @@ interface TOTPSetupProps {
 }
 
 export const TOTPSetup: React.FC<TOTPSetupProps> = ({ onSuccess, onCancel }) => {
-    const toastify = useToastify()
+  const toastify = useToastify()
   const router = useRouter();
   const [step, setStep] = useState<'loading' | 'setup' | 'verify'>('loading');
   const [setupData, setSetupData] = useState<TOTPRegistrationDTO | null>(null);
@@ -26,17 +26,18 @@ export const TOTPSetup: React.FC<TOTPSetupProps> = ({ onSuccess, onCancel }) => 
   const [showManualEntry, setShowManualEntry] = useState(false);
 
   useEffect(() => {
-     initializeTOTPSetup();
+    initializeTOTPSetup();
   }, []);
 
   const initializeTOTPSetup = async () => {
+    console.log("totp")
     try {
       setIsLoading(true);
       setErrorMessage(null);
 
       // TODO: Call API to initialize TOTP setup
-       const response = await totpService.registerToTp();
-       console.log(response);
+      const response = await totpService.registerToTp();
+      console.log(response);
       if (response.success) {
         setSetupData(response.data);
         setStep('setup');
@@ -46,7 +47,7 @@ export const TOTPSetup: React.FC<TOTPSetupProps> = ({ onSuccess, onCancel }) => 
 
     } catch (err) {
       setErrorMessage('Failed to initialize TOTP setup');
-    } finally{
+    } finally {
       setIsLoading(false);
     }
   };
@@ -83,7 +84,7 @@ export const TOTPSetup: React.FC<TOTPSetupProps> = ({ onSuccess, onCancel }) => 
 
   const handleVerifyTOTP = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     const otpValue = otp.join('');
     if (otpValue.length !== 6) {
       setErrorMessage('Please enter all 6 digits');
@@ -129,12 +130,10 @@ export const TOTPSetup: React.FC<TOTPSetupProps> = ({ onSuccess, onCancel }) => 
     }
   };
 
-  const cancelSetUp = () =>{
-      router.back()
-    
+  const cancelSetUp = () => {
+    router.back()
+
   }
-
-
 
   const copySecretKey = async () => {
     if (setupData?.secretKey) {
@@ -178,18 +177,18 @@ export const TOTPSetup: React.FC<TOTPSetupProps> = ({ onSuccess, onCancel }) => 
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
           </button>
-          
+
           <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
             </svg>
           </div>
-          
+
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
             {step === 'setup' ? 'Set up Authenticator App' : 'Verify Setup'}
           </h1>
           <p className="text-gray-600">
-            {step === 'setup' 
+            {step === 'setup'
               ? 'Step 1 of 2: Scan the QR code with your authenticator app'
               : 'Step 2 of 2: Enter the verification code from your app'
             }
@@ -217,9 +216,9 @@ export const TOTPSetup: React.FC<TOTPSetupProps> = ({ onSuccess, onCancel }) => 
             {/* QR Code */}
             <div className="text-center">
               <div className="inline-block p-4 bg-white border-2 border-gray-300 rounded-lg mb-4">
-                <img 
-                  src={setupData.qrCodeImage} 
-                  alt="TOTP QR Code" 
+                <img
+                  src={setupData.qrCodeImage}
+                  alt="TOTP QR Code"
                   className="w-48 h-48 mx-auto"
                 />
               </div>
