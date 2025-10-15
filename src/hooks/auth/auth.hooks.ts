@@ -1,6 +1,6 @@
 'use client'
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
-import { getCurrentUser, getMFASettings, login, logout, refreshAccessToken, refreshAndGetUser, updateMFASettings } from "@/redux/slices/authSlices";
+import { getCurrentUser, getMFASettings, login, logout, refreshAccessToken, updateMFASettings } from "@/redux/slices/authSlices";
 import { TOASTIFY_ERROR, TOASTIFY_SUCCESS, useToastify } from "@/store/Toastify";
 import { LoginRequestDTO } from "@/types/request/auth.request.dto";
 import { useRouter } from "next/navigation";

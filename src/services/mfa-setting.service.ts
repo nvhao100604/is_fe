@@ -9,7 +9,7 @@ interface VerifyDeviceWithTOTP {
     }
 }
 
-export interface FormVerify{
+export interface FormVerify {
     username?: string | null;
     password?: string | null;
 }
@@ -19,7 +19,7 @@ const verifyTOTP = async (request: VerifyDeviceWithTOTP): Promise<any> => {
     return response.data
 }
 
-const getMFASetting = async (formVerify: FormVerify | null,option?: object): Promise<any> => {
+const getMFASetting = async (formVerify: FormVerify | null, option?: object): Promise<any> => {
     const response = await api.post('/mfa-settings', formVerify, option)
     return response.data
 }

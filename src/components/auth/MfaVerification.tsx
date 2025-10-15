@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { mailServices } from '@/services/mail.services';
+import { authServices } from '@/services/auth.service';
 
 // Types
 interface MfaSettings {
@@ -54,7 +56,6 @@ const MfaVerification: React.FC<MfaVerificationProps> = ({
   const loadMfaSettings = async () => {
     try {
       setLoading(true);
-
       // TODO: API CALL - Send initial email based on action type
       if (isLoginAction) {
         // FOR LOGIN: Send device verification email
