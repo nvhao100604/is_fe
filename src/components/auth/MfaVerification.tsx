@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { mfaSettingServices } from '@/services/mfa-setting.service';
+import { authServices } from '@/services/auth.service';
 
 // Types
 interface MfaSettings {
@@ -65,13 +67,13 @@ const MfaVerification: React.FC<MfaVerificationProps> = ({
         }
       } else {
         // FOR OTHER ACTIONS: Send notification email
-        // await authServices.sendEmailNotificationVerify();
+        await authServices.sendEmailNotificationVerify();
         console.log('TODO: Send notification email for', action);
       }
 
       // TODO: API CALL - Get MFA settings
       const formVerify = { username: isLoginAction ? username : null };
-      // const response = await mfaSettingServices.getMFASetting(formVerify, { option: {} });
+      const response = await mfaSettingServices.getMFASetting(formVerify, { option: {} });
 
       // Mock data for development
       const mockResponse = {
@@ -91,12 +93,12 @@ const MfaVerification: React.FC<MfaVerificationProps> = ({
         }
       };
 
-      if (mockResponse.success) {
-        setMfaSettings(mockResponse.data);
-        setCurrentMethod(mockResponse.data.mfaPrimaryMethod);
+      if (response.success) {
+        setMfaSettings(response.data);
+        setCurrentMethod(response.data.mfaPrimaryMethod);
 
         // Build available methods based on action type
-        const methods = buildAvailableMethods(mockResponse.data, isLoginAction);
+        const methods = buildAvailableMethods(response.data, isLoginAction);
         setAvailableMethods(methods);
       }
 
@@ -122,7 +124,7 @@ const MfaVerification: React.FC<MfaVerificationProps> = ({
 
     // Add fallback methods (NOT for login)
     if (!isLogin) {
-      methods.push('BACKUP_CODES');
+      //methods.push('BACKUP_CODES');
       methods.push('PASSWORD');
     }
 
@@ -164,6 +166,11 @@ const MfaVerification: React.FC<MfaVerificationProps> = ({
         case 'PASSWORD':
           const pwdResponse = await handlePasswordVerification();
           setResponse(pwdResponse)
+          if(pwdResponse && pwdResponse.success) {
+              onSuccess();
+          }else{
+              setError(pwdResponse.message || 'Password verification failed');
+          }
           break;
 
         default:
@@ -171,17 +178,16 @@ const MfaVerification: React.FC<MfaVerificationProps> = ({
       }
 
       // Handle response
-      if (response.success) {
-        if (isLoginAction && response.data) {
-          // Store tokens for login
-          localStorage.setItem('accessToken', response.token);
-          localStorage.setItem('refreshToken', response.refreshToken);
-          document.cookie = `accessToken=${response.token}; Path=/; SameSite=Strict`;
-        }
-        onSuccess();
-      } else {
-        setError(response?.message || 'Verification failed. Please try again.');
-      }
+      // if (response.success) {
+      //   if (isLoginAction && response.data) {
+      //     localStorage.setItem('accessToken', response.token);
+      //     localStorage.setItem('refreshToken', response.refreshToken);
+      //     document.cookie = `accessToken=${response.token}; Path=/; SameSite=Strict`;
+      //   }
+      //   onSuccess();
+      // } else {
+      //   setError(response?.message || 'Verification failed. Please try again.');
+      // }
 
     } catch (err) {
       setError('Verification failed. Please try again.');
@@ -308,22 +314,34 @@ const MfaVerification: React.FC<MfaVerificationProps> = ({
   // ========================================
   // PASSWORD VERIFICATION (Non-login only)
   // ========================================
-  const handlePasswordVerification = async () => {
-    if (isLoginAction) {
-      throw new Error('Password verification not allowed for login');
-    }
+    const handlePasswordVerification = async () => {
+        if (isLoginAction) {
+            throw new Error('Password verification not allowed for login');
+        }
 
-    // TODO: API CALL - Password verification
-    const payload = {
-      password: verificationCode,
-      action: action
+        const payload = {
+            password: verificationCode,
+        };
+        console.log('TODO: Password verification:', payload);
+
+        try {
+            const response = await authServices.verifyPassword(payload);
+            console.log('Password verification response:', response);
+
+            if (response && response.success) {
+                if (response.data === true) {
+                    return { success: true, data: true };
+                } else {
+                    return { success: false, message: 'Incorrect password' };
+                }
+            } else {
+                return { success: false, message: response?.message || 'Password verification failed' };
+            }
+        } catch (error) {
+            console.error("Error during password verification:", error);
+            return { success: false, message: 'An unexpected error occurred.' };
+        }
     };
-    console.log('TODO: Password verification:', payload);
-    // return await authServices.verifyPassword(payload);
-
-    // Mock response
-    return { success: true, data: true };
-  };
 
   // ========================================
   // SEND EMAIL CODE (Resend)

@@ -20,13 +20,13 @@ const [password, setPassword] = useState("");
 const [pendingAction, setPendingAction] = useState<null | (() => void)>(null);
 const [errorMessage, setErrorMessage] = useState("");
 
-  const { mfaSetting, isLoading, errors } = useGetMFASettings()
+  const { mfaSettings, isLoading, errors } = useGetMFASettings()
 
   const [showMfaVerification, setShowMfaVerification] = useState(false);
   const [pendingSetupMethod, setPendingSetupMethod] = useState<'TOTP' | 'EMAIL' | 'WEBAUTHN' | null>(null);
   const updateMFASettings = useUpdateMFASettings()
 
-  console.log(mfaSetting);
+  console.log(mfaSettings);
 
   const handleEnableEmail = async () => {
       setPendingSetupMethod('EMAIL');
@@ -137,22 +137,22 @@ const handleMfaVerificationSuccess = () => {
   const handleToggleMfa = async () => {
     // TODO: Implement toggle MFA functionality
     // console.log('Toggle MFA');
-    if (mfaSetting) {
-      const mfaEnabled =!mfaSetting.mfaEnabled;
+    if (mfaSettings) {
+      const mfaEnabled =!mfaSettings.mfaEnabled;
       if(mfaEnabled){
-        if(!mfaSetting.mfaTotpEnable && !mfaSetting.mfaEmailEnabled && !mfaSetting.mfaWebauthnEnabled){
+        if(!mfaSettings.mfaTotpEnable && !mfaSettings.mfaEmailEnabled && !mfaSettings.mfaWebauthnEnabled){
           toastify.notify("Please enable at least one authentication method before enabling MFA.", TOASTIFY_INFO);
           return;
         }
       }
 
       updateMFASettings({
-        mfaId: mfaSetting.mfaId,
-        data: { ...mfaSetting, mfaEnabled: !mfaSetting.mfaEnabled },
+        mfaId: mfaSettings.mfaId,
+        data: { ...mfaSettings, mfaEnabled: !mfaSettings.mfaEnabled },
         option: { responseDelay: 0 }
       })
     } else {
-      console.log("mfaSetting is undefined");
+      console.log("mfaSettings is undefined");
     }
   };
 
@@ -169,7 +169,7 @@ const handleMfaVerificationSuccess = () => {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="bg-red-50 border border-red-200 rounded-lg p-6">
           <h2 className="text-lg font-semibold text-red-800 mb-2">Error</h2>
-          <p className="text-red-600">{errors || 'Failed to load mfaSetting'}</p>
+          <p className="text-red-600">{errors || 'Failed to load mfaSettings'}</p>
         </div>
       </div>
     );
@@ -223,16 +223,16 @@ const handleMfaVerificationSuccess = () => {
               <div>
                 <h3 className="text-lg font-medium text-gray-900">Two-Factor Authentication</h3>
                 <p className="text-sm text-gray-600">
-                  {mfaSetting && mfaSetting.mfaEnabled ? 'Your account is protected with 2FA' : 'Add an extra layer of security'}
+                  {mfaSettings && mfaSettings.mfaEnabled ? 'Your account is protected with 2FA' : 'Add an extra layer of security'}
                 </p>
               </div>
               <button
                 onClick={handleToggleMfa}
-                className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 ${mfaSetting?.mfaEnabled ? 'bg-blue-600' : 'bg-gray-200'
+                className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 ${mfaSettings?.mfaEnabled ? 'bg-blue-600' : 'bg-gray-200'
                   }`}
               >
                 <span
-                  className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${mfaSetting?.mfaEnabled ? 'translate-x-5' : 'translate-x-0'
+                  className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${mfaSettings?.mfaEnabled ? 'translate-x-5' : 'translate-x-0'
                     }`}
                 />
               </button>
@@ -241,7 +241,7 @@ const handleMfaVerificationSuccess = () => {
             {/* Authentication Methods */}
             <div className="space-y-6">
               <h3 className="text-lg font-medium text-gray-900">Authentication Methods</h3>
-              <MethodBox mfaSetting={mfaSetting && mfaSetting}
+              <MethodBox mfaSetting={mfaSettings && mfaSettings}
                 href={"/auth/mfa/setup-totp"}
                 label="Authenticator App"
                 description="Use an app like Google Authenticator or Authy"
@@ -252,7 +252,7 @@ const handleMfaVerificationSuccess = () => {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                 </svg>
               </MethodBox>
-              <MethodBox mfaSetting={mfaSetting}
+              <MethodBox mfaSetting={mfaSettings}
                 href={"/auth/mfa/setup-email"}
                 label="Email Authentication"
                 description="Receive codes via email"
@@ -263,7 +263,7 @@ const handleMfaVerificationSuccess = () => {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                 </svg>
               </MethodBox>
-              <MethodBox mfaSetting={mfaSetting}
+              <MethodBox mfaSetting={mfaSettings}
                 href={"/auth/mfa/setup-webauthn"}
                 label="Security Key (WebAuthn)"
                 description="Use hardware security keys or biometric authentication"
@@ -295,7 +295,7 @@ const handleMfaVerificationSuccess = () => {
             </div>
 
             {/* Settings */}
-            <div className="border-t pt-6">
+            {/* <div className="border-t pt-6">
               <div className="flex items-center justify-between">
                 <div>
                   <h3 className="text-lg font-medium text-gray-900">Require MFA for sensitive actions</h3>
@@ -304,17 +304,17 @@ const handleMfaVerificationSuccess = () => {
                   </p>
                 </div>
                 <button
-                  onClick={() => {/* TODO: Toggle sensitive actions MFA */ }}
-                  className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 ${mfaSetting?.mfaRequiredMfaForSensitiveActions ? 'bg-blue-600' : 'bg-gray-200'
+                  onClick={() => {/* TODO: Toggle sensitive actions MFA 
+                  className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 ${mfaSettings?.mfaRequiredMfaForSensitiveActions ? 'bg-blue-600' : 'bg-gray-200'
                     }`}
                 >
                   <span
-                    className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${mfaSetting && mfaSetting.mfaRequiredMfaForSensitiveActions ? 'translate-x-5' : 'translate-x-0'
+                    className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${mfaSettings && mfaSettings.mfaRequiredMfaForSensitiveActions ? 'translate-x-5' : 'translate-x-0'
                       }`}
                   />
                 </button>
               </div>
-            </div>
+            </div> */}
           </div>
         </div>
       </div>
