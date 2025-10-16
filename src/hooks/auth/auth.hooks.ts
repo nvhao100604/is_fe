@@ -33,7 +33,7 @@ const useLogin = () => {
                 toastify.notify("Authentication Error", TOASTIFY_ERROR)
             }
 
-            if (auth.isAuthenticated) {
+            if (auth.accessTokens) {
                 dispatch(getCurrentUser())
                 toastify.notify("Authentication Successfully!", TOASTIFY_SUCCESS)
                 await new Promise(resolve => setTimeout(resolve, 2000))
