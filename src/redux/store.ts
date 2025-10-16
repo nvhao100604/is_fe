@@ -2,6 +2,7 @@ import { configureStore } from '@reduxjs/toolkit'
 import navigationReducer from '@/redux/slices/navigationSlices'
 import authReducer from '@/redux/slices/authSlices'
 import { setupInterceptors } from '@/config/axios'
+import { setupInterceptor } from '../../middleware'
 
 export const store = configureStore({
     reducer: {
@@ -17,6 +18,7 @@ export const store = configureStore({
 })
 
 setupInterceptors(store.dispatch, store.getState)
+setupInterceptor(store.dispatch, store.getState)
 
 export type RootState = ReturnType<typeof store.getState>
 export type AppDispatch = typeof store.dispatch

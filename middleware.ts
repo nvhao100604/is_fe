@@ -1,8 +1,16 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
+let storeDispatch: any = null;
+let storeGetState: any = null;
+
+export const setupInterceptor = (dispatch: any, getState: any) => {
+  storeDispatch = dispatch;
+  storeGetState = getState;
+};
+
 export function middleware(request: NextRequest) {
-  const token = request.cookies.get('refreshToken')?.value;
+  const token = storeGetState().auth.accessToken
   const { pathname } = request.nextUrl;
 
   // Public routes that don't require authentication
@@ -12,7 +20,6 @@ export function middleware(request: NextRequest) {
     '/auth/forgot-password',
     '/auth/verify-email',
     '/auth/oauth-callback',
-    '/dashboard/*'
   ];
 
   // If trying to access protected route without token
