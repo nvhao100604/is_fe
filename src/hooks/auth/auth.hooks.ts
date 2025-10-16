@@ -42,7 +42,7 @@ const useLogin = () => {
             }
         }
         getUserData()
-    }, [auth.isAuthenticated])
+    }, [auth.accessTokens])
 
     return logIn
 }

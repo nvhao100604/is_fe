@@ -2,7 +2,8 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 export function middleware(request: NextRequest) {
-  const token = request.cookies.get("refreshToken")?.value
+  const token = request.cookies.get("_vercel_jwt")?.value
+  console.log("token check", token)
   const { pathname } = request.nextUrl;
 
   // Public routes that don't require authentication
