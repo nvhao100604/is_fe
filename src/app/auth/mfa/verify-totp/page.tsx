@@ -1,10 +1,10 @@
 import React from 'react';
-import { useRouter } from 'next/router';
+import { useRouter } from 'next/navigation';
 import { TOTPVerification } from '@/components/auth/TOTPVerification';
 
 export default function VerifyToTpPage() {
     const router = useRouter();
-    const { email } = router.query;
+    // const { email } = router.query;
 
     const handleResend = async () => {
         try {
