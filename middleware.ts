@@ -16,11 +16,13 @@ export function middleware(request: NextRequest) {
 
   // If trying to access protected route without token
   if (!token && !publicRoutes.includes(pathname)) {
+    console.log("No token")
     return NextResponse.redirect(new URL('/auth/login', request.url));
   }
 
   // If logged in user tries to access auth pages, redirect to dashboard
   if (token && publicRoutes.includes(pathname)) {
+    console.log("Have token: ", token)
     return NextResponse.redirect(new URL('/dashboard', request.url));
     //return NextResponse.redirect(new URL('/', request.url)); 
   }
