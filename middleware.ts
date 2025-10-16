@@ -1,9 +1,8 @@
-import { store } from '@/redux/store';
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 export function middleware(request: NextRequest) {
-  const token = store.getState().auth.accessTokens
+  const token = request.cookies.get("refreshToken")?.value
   const { pathname } = request.nextUrl;
 
   // Public routes that don't require authentication
@@ -13,16 +12,19 @@ export function middleware(request: NextRequest) {
     '/auth/forgot-password',
     '/auth/verify-email',
     '/auth/oauth-callback',
+    '/dashboard'
   ];
 
   // If trying to access protected route without token
   if (!token && !publicRoutes.includes(pathname)) {
+    console.log("path", pathname)
     console.log("No token")
     return NextResponse.redirect(new URL('/auth/login', request.url));
   }
 
   // If logged in user tries to access auth pages, redirect to dashboard
   if (token && publicRoutes.includes(pathname)) {
+    console.log("path", pathname)
     console.log("Have token: ", token)
     return NextResponse.redirect(new URL('/dashboard', request.url));
     //return NextResponse.redirect(new URL('/', request.url)); 
