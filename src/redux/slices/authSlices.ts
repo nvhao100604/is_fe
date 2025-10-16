@@ -169,6 +169,7 @@ const authSlice = createSlice({
                 state.isAuthenticated = true
                 // console.log("payload check: ", action.payload)
                 setItemWithKey(IS_AUTHENTICATED, true)
+                state.isLoading = false
                 state.accessTokens = action.payload
                 state.errors = null
             })
