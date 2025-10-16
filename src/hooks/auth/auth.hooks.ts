@@ -36,7 +36,9 @@ const useLogin = () => {
             if (auth.accessTokens) {
                 dispatch(getCurrentUser())
                 toastify.notify("Authentication Successfully!", TOASTIFY_SUCCESS)
+                console.log("check user: ", auth.account.accountEmail)
                 await new Promise(resolve => setTimeout(resolve, 2000))
+                console.log("check promise")
                 router.push('/dashboard')
             }
         }
