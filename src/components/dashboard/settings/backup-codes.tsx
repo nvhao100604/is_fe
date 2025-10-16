@@ -1,8 +1,8 @@
 'use client'
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { mfaSettingServices } from '@/services/mfa-setting.service';
 import { backupCodeService } from '@/services/backupcode.service';
+import { useAuthAccount } from '@/hooks/auth/auth.hooks';
 
 const BackupCodesPage: React.FC = () => {
   const router = useRouter();
@@ -12,28 +12,29 @@ const BackupCodesPage: React.FC = () => {
   const [regenerating, setRegenerating] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [downloaded, setDownloaded] = useState(false);
+  const auth = useAuthAccount()
 
   useEffect(() => {
-  
-    loadBackupCodes();
-  }, []);
+    // console.log("check auth", auth)
+    if (auth.accessTokens) loadBackupCodes();
+  }, [auth.accessTokens]);
 
 
   const loadBackupCodes = async () => {
-      try {
-         setLoading(true);
-        const response = await backupCodeService.getBackupCodes();
-        if (response.success) {
-          setCodes(response.data);
-        } else {
-          setError(response.message);
-        } 
-      } catch (err) {
-        setError('Failed to load backup codes');
-      } finally {
-        setLoading(false);
+    try {
+      setLoading(true);
+      const response = await backupCodeService.getBackupCodes();
+      if (response.success) {
+        setCodes(response.data);
+      } else {
+        setError(response.message);
       }
-    };
+    } catch (err) {
+      setError('Failed to load backup codes');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleRegenerate = async () => {
     if (!confirm('Are you sure? This will invalidate all existing backup codes.')) {
