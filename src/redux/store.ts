@@ -18,7 +18,6 @@ export const store = configureStore({
 })
 
 setupInterceptors(store.dispatch, store.getState)
-setupInterceptor(store.dispatch, store.getState)
 
 export type RootState = ReturnType<typeof store.getState>
 export type AppDispatch = typeof store.dispatch

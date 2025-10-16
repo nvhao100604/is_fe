@@ -1,16 +1,9 @@
+import { store } from '@/redux/store';
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-let storeDispatch: any = null;
-let storeGetState: any = null;
-
-export const setupInterceptor = (dispatch: any, getState: any) => {
-  storeDispatch = dispatch;
-  storeGetState = getState;
-};
-
 export function middleware(request: NextRequest) {
-  const token = storeGetState().auth.accessToken
+  const token = store.getState().auth.accessTokens
   const { pathname } = request.nextUrl;
 
   // Public routes that don't require authentication
