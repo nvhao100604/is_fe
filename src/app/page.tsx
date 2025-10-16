@@ -1,7 +1,5 @@
-'use client'
-import { useRouter } from "next/navigation"
-import { useEffect } from "react"
-import LoginPage from "./auth/login/page"
+// 'use client'
+import { LoginForm } from "@/components/auth/LoginForm"
 
 function Home() {
   // const router = useRouter()
@@ -10,7 +8,7 @@ function Home() {
   //   router.push('/dashboard')
   // }, [])
   return (
-    <LoginPage />
+    <LoginForm />
   )
 }
 
