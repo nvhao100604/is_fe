@@ -38,7 +38,7 @@ const useLogin = () => {
                 toastify.notify("Authentication Successfully!", TOASTIFY_SUCCESS)
                 await new Promise(resolve => setTimeout(resolve, 2000))
                 console.log("check promise")
-                router.replace('/dashboard')
+                // router.replace('/dashboard')
             }
         }
         getUserData()
