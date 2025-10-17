@@ -2,7 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { mfaSettingServices } from '@/services/mfa-setting.service';
 import { authServices } from '@/services/auth.service';
-import { EmailVerification } from '@/services/mail.services';
+import { EmailVerification, mailServices } from '@/services/mail.services';
+import { totpService, TOTPVerificationAuth } from '@/services/totp.service';
+import { TOASTIFY_ERROR, TOASTIFY_SUCCESS, useToastify } from '@/store/Toastify';
+import { backupCodeService, BackupCodeVerificationAuth } from '@/services/backupcode.service';
 
 // Types
 interface MfaSettings {
@@ -44,8 +47,10 @@ const MfaVerification: React.FC<MfaVerificationProps> = ({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [availableMethods, setAvailableMethods] = useState<string[]>([]);
+    const toastify = useToastify();
 
   const isLoginAction = action === 'login';
+  const isForgotPasswordAction = action === 'password_reset';
 
   useEffect(() => {
     loadMfaSettings();
@@ -57,49 +62,35 @@ const MfaVerification: React.FC<MfaVerificationProps> = ({
   const loadMfaSettings = async () => {
     try {
       setLoading(true);
+
       // TODO: API CALL - Send initial email based on action type
-      if (isLoginAction) {
+      if (isLoginAction || isForgotPasswordAction) {
         // FOR LOGIN: Send device verification email
         if (username) {
           const formVerify = { username: username };
           // await mailServices.sendVerificationDevice(formVerify);
           console.log('TODO: Send device verification email for login:', formVerify);
         }
-      } else {
+      } 
+      else {
         // FOR OTHER ACTIONS: Send notification email
         //await authServices.sendEmailNotificationVerify();
         console.log('TODO: Send notification email for', action);
       }
 
       // TODO: API CALL - Get MFA settings
-      const formVerify = { username: isLoginAction ? username : null };
+      const formVerify = { username: isLoginAction || isForgotPasswordAction ? username : null };
+      console.log('Loading MFA settings with:', formVerify);
       const response = await mfaSettingServices.getMFASetting(formVerify, { option: {} });
-
-      // Mock data for development
-      const mockResponse = {
-        success: true,
-        data: {
-          mfaId: 4,
-          mfaEnabled: true,
-          mfaPrimaryMethod: 'EMAIL' as const,
-          mfaBackupMethod: null,
-          mfaTotpSecretKey: null,
-          mfaTotpEnable: true,
-          mfaEmailEnabled: true,
-          mfaWebauthnEnabled: false,
-          mfaAuthenticatorAppEnabled: false,
-          mfaRequiredMfaForSensitiveActions: false,
-          mfaUpdatedAt: '2025-09-22T02:01:11'
-        }
-      };
 
       if (response.success) {
         setMfaSettings(response.data);
         setCurrentMethod(response.data.mfaPrimaryMethod);
         if(response.data.mfaPrimaryMethod === 'EMAIL'){
-          if(action !== 'login'){
-          await authServices.sendEmailNotificationVerify();
-          console.log('TODO: Send notification email for', action);
+          if(isLoginAction || isForgotPasswordAction){
+            await mailServices.emailRequireAuth(username!);
+          }else{
+            await authServices.sendEmailNotificationVerify();
           }
         }
 
@@ -129,9 +120,10 @@ const MfaVerification: React.FC<MfaVerificationProps> = ({
     if (settings.mfaAuthenticatorAppEnabled) methods.push('AUTHENTICATOR_APP');
 
     // Add fallback methods (NOT for login)
-    if (!isLogin) {
-      //methods.push('BACKUP_CODES');
+    if (!(isLogin || isForgotPasswordAction)) {
       methods.push('PASSWORD');
+    }else{
+      methods.push('BACKUP_CODES');
     }
 
     return methods;
@@ -170,6 +162,18 @@ const MfaVerification: React.FC<MfaVerificationProps> = ({
         case 'AUTHENTICATOR_APP':
           const authResponse = await handleTOTPVerification();
           setResponse(authResponse)
+          if(authResponse && authResponse.success) {
+            if(isLoginAction){
+
+            }else if(isForgotPasswordAction){
+              toastify.notify('Success. Now you can to change password',TOASTIFY_SUCCESS );
+            }else{
+
+            }
+            onSuccess();
+          }else{
+            toastify.notify(authResponse?.message || 'TOTP code is incorrect', TOASTIFY_ERROR );
+          }
           break;
 
         case 'WEBAUTHN':
@@ -180,6 +184,18 @@ const MfaVerification: React.FC<MfaVerificationProps> = ({
         case 'BACKUP_CODES':
           const backUpResponse = await handleBackupCodeVerification();
           setResponse(backUpResponse)
+          if (backUpResponse && backUpResponse.success) {
+            if(isLoginAction){
+
+            }else if(isForgotPasswordAction){
+              toastify.notify('Success. Now you can to change password',TOASTIFY_SUCCESS );
+            }else{
+
+            }
+            onSuccess();
+          }else{
+            toastify.notify(backUpResponse?.message || 'Backup code is incorrect', TOASTIFY_ERROR );
+          }
           break;
 
         case 'PASSWORD':
@@ -187,8 +203,10 @@ const MfaVerification: React.FC<MfaVerificationProps> = ({
           console.log("pwd res check:", pwdResponse)
           setResponse(pwdResponse)
           if (pwdResponse && pwdResponse.success) {
+            toastify.notify('Password verified successfully', TOASTIFY_SUCCESS );
             onSuccess();
           } else {
+            toastify.notify(pwdResponse?.message || 'Password verification failed', TOASTIFY_ERROR );
             setError(pwdResponse?.message || 'Password verification failed');
           }
           break;
@@ -221,24 +239,21 @@ const MfaVerification: React.FC<MfaVerificationProps> = ({
   // EMAIL VERIFICATION
   // ========================================
   const handleEmailVerification = async () => {
-    if (isLoginAction) {
+    if (isLoginAction || isForgotPasswordAction) {
       // TODO: API CALL - Login email verification
-      const payload = {
-        username: username ?? "",
+      const payload: EmailVerification = {
+        email: username! ,
         otp: verificationCode,
       };
-      console.log('TODO: Login email verification:', payload);
-      // return await mailServices.verificationDevice(payload);
-
-      // Mock response
-      return {
-        success: true,
-        data: true,
-        token: 'mock-access-token',
-        refreshToken: 'mock-refresh-token'
-      };
+      const ressponse =  await mailServices.emailVerifyAuth(payload);
+        if(ressponse && ressponse.success) {
+                if(ressponse.data) {
+                  return { success: true, data: true };
+                } else {
+                  return { success: false, message: 'Incorrect email code' };
+                }
+              }
     } else {
-      // TODO: API CALL - General email verification
       const payload: EmailVerification = {
         email: null,
         otp: verificationCode,
@@ -253,9 +268,6 @@ const MfaVerification: React.FC<MfaVerificationProps> = ({
           return { success: false, message: 'Incorrect email code' };
         }
       }
-
-      // Mock response
-      return { success: true, data: true };
     }
   };
 
@@ -263,24 +275,21 @@ const MfaVerification: React.FC<MfaVerificationProps> = ({
   // TOTP VERIFICATION
   // ========================================
   const handleTOTPVerification = async () => {
-    if (isLoginAction) {
+    if (isLoginAction || isForgotPasswordAction) {
       // TODO: API CALL - Login TOTP verification
-      const payload = {
-        username: username ?? "",
-        totpVerificationDTO: {
-          code: verificationCode,
-        }
+      const payload: TOTPVerificationAuth = {
+        email: username!,
+        otp: verificationCode,
       };
-      console.log('TODO: Login TOTP verification:', payload);
-      // return await mfaSettingServices.verifyTOTP(payload);
+      const ressponse =  await totpService.verifyTotpAuth(payload);
 
-      // Mock response
-      return {
-        success: true,
-        mfaRequired: false,
-        token: 'mock-access-token',
-        refreshToken: 'mock-refresh-token'
-      };
+      if(ressponse && ressponse.success) {
+        if(ressponse.data) {
+          return { success: true, data: true };
+        } else {
+          return { success: false, message: 'Incorrect TOTP code'};
+        }
+      }
     } else {
       // TODO: API CALL - General TOTP verification
       const payload = {
@@ -323,9 +332,21 @@ const MfaVerification: React.FC<MfaVerificationProps> = ({
   // BACKUP CODE VERIFICATION (Non-login only)
   // ========================================
   const handleBackupCodeVerification = async () => {
-    if (isLoginAction) {
-      throw new Error('Backup codes not allowed for login');
+    if (isLoginAction || isForgotPasswordAction) {
+      const payload: BackupCodeVerificationAuth = {
+        email: username!,
+        code: verificationCode,
+      }
+      const ressponse =  await backupCodeService.verifyCodeAuth(payload);
+      if(ressponse && ressponse.success) {
+        if(ressponse.data) {
+          return { success: true, data: true };
+        } else {
+          return { success: false, message: 'Incorrect backup code'};
+        }
+      }
     }
+
 
     // TODO: API CALL - Backup code verification
     const payload = {
@@ -379,21 +400,12 @@ const MfaVerification: React.FC<MfaVerificationProps> = ({
       setLoading(true);
       setError(null);
 
-      if (isLoginAction) {
-        // TODO: API CALL - Resend device verification email
-        const payload = {
-          username: username ?? "",
-        };
-        console.log('TODO: Resend device verification email:', payload);
-        // await mailServices.sendVerificationDevice(payload);
-      } else {
-        // TODO: API CALL - Resend notification email
-        console.log('TODO: Resend notification email for', action);
-        // await authServices.sendEmailNotificationVerify();
-      }
-
-      // Show success message
-      console.log('Email code sent successfully');
+      if(isLoginAction || isForgotPasswordAction){
+            await mailServices.emailRequireAuth(username!);
+          }else{
+            await authServices.sendEmailNotificationVerify();
+          }
+          toastify.notify('Verification code sent to your email', TOASTIFY_SUCCESS );
 
     } catch (err) {
       setError('Failed to send email code');

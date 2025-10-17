@@ -44,6 +44,11 @@ import { RegisterRequestDTO } from "@/types/request/auth.request.dto"
 
 // export const accountService = new AccountService();
 
+export interface FormResetPasswordDTO{
+  email: string;
+  password: string;
+}
+
 const getAccounts = async (): Promise<any> => {
   const response = await api.get("/accounts")
   return response.data
@@ -54,4 +59,14 @@ const createAccount = async (accountData: RegisterRequestDTO): Promise<any> => {
   return response.data
 }
 
-export const accountServices = { getAccounts, createAccount }
+const requireForgotPassword = async (email: string): Promise<any> => {
+  const response = await api.post("/accounts/require-forgot-password", { email })
+  return response.data
+}
+
+const resetPassword = async (data: FormResetPasswordDTO): Promise<any> => {
+  const response = await api.post("/accounts/reset-password", data)
+  return response.data
+}
+
+export const accountServices = { getAccounts, createAccount, requireForgotPassword, resetPassword }
