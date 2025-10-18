@@ -1,6 +1,12 @@
 import api from "@/config/axios"
 
 const BASE_URL = '/backup-codes';
+const BASE_NA_URL = '/na-backup-codes';
+
+export interface BackupCodeVerificationAuth{
+    email: string;
+    code: string;
+}
 
 const getBackupCodes = async (): Promise<any> => {
     const response = await api.get(`${BASE_URL}`);
@@ -22,9 +28,15 @@ const deleteBackupCodes = async (): Promise<any> => {
     return response.data;
 }
 
+const verifyCodeAuth = async (backupCode: BackupCodeVerificationAuth): Promise<any> => {
+    const response = await api.post(`${BASE_NA_URL}/invalidate`, backupCode);
+    return response.data;
+}
+
 export const backupCodeService = {
     getBackupCodes,
     generateBackupCodes,
     verifyBackupCode,
-    deleteBackupCodes
+    deleteBackupCodes,
+    verifyCodeAuth
 }
