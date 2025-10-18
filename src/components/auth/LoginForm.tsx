@@ -105,6 +105,7 @@ export const LoginForm: React.FC = () => {
             type="text"
             name="username"
             label="Username"
+            autoComplete='username'
             placeholder="Enter your username"
             value={formData.username}
             onChange={handleChange}
@@ -116,6 +117,7 @@ export const LoginForm: React.FC = () => {
             type="password"
             name="password"
             label="Password"
+            autoComplete='current-password'
             placeholder="Enter your password"
             value={formData.password}
             onChange={handleChange}
