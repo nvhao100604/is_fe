@@ -73,7 +73,7 @@ const MfaSettingsPage = () => {
     console.log("verify password: ", password);
     try {
       setErrorMessage("");
-        const payload = {
+      const payload = {
         password: password,
       };
       // gọi API verify password
@@ -81,17 +81,17 @@ const MfaSettingsPage = () => {
       if (response && response.success) {
         if (response.data) {
           if (pendingAction) {
-                  await pendingAction();
-                  setShowVerifyModal(false);
-                  setPassword("");
-                  setPendingAction(null);
-                }
-        }else{
+            await pendingAction();
+            setShowVerifyModal(false);
+            setPassword("");
+            setPendingAction(null);
+          }
+        } else {
           setErrorMessage("Password incorrect");
           return;
         }
       }
- 
+
     } catch (err) {
       setErrorMessage("Something went wrong");
     }
@@ -147,10 +147,10 @@ const MfaSettingsPage = () => {
   const handleMfaSettingDisableTOTP = async () => {
     console.log("Disable TOTP MFA");
     if (mfaSettings) {
-      if(mfaSettings.mfaTotpEnable === false || mfaSettings.mfaPrimaryMethod === 'TOTP'){
+      if (mfaSettings.mfaTotpEnable === false || mfaSettings.mfaPrimaryMethod === 'TOTP') {
         toastify.notify("Cannot disable TOTP as it is either already disabled or set as the primary method.", TOASTIFY_ERROR);
         return;
-      }else{
+      } else {
         const mfaTotpEnable = !mfaSettings.mfaTotpEnable;
         updateMFASettings({
           mfaId: mfaSettings.mfaId,
@@ -164,10 +164,10 @@ const MfaSettingsPage = () => {
   const handleMfaSettingDisableEmail = async () => {
     console.log("Disable Email MFA");
     if (mfaSettings) {
-      if(mfaSettings.mfaEmailEnabled === false || mfaSettings.mfaPrimaryMethod === 'EMAIL'){
+      if (mfaSettings.mfaEmailEnabled === false || mfaSettings.mfaPrimaryMethod === 'EMAIL') {
         toastify.notify("Cannot disable Email as it is either already disabled or set as the primary method.", TOASTIFY_ERROR);
         return;
-      }else{
+      } else {
         const mfaEmailEnabled = !mfaSettings.mfaEmailEnabled;
         updateMFASettings({
           mfaId: mfaSettings.mfaId,
@@ -178,8 +178,9 @@ const MfaSettingsPage = () => {
     }
   }
 
-  
-
+  const handleChangePassword = () => {
+    router.push('/dashboard/setting/change-password');
+  }
   const handleToggleMfa = async () => {
     // TODO: Implement toggle MFA functionality
     // console.log('Toggle MFA');
@@ -339,36 +340,53 @@ const MfaSettingsPage = () => {
                     View Codes
                   </button>
                 </div>
-              </div>
 
-              {/* Settings */}
-              {/* <div className="border-t pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-lg font-medium text-gray-900">Require MFA for sensitive actions</h3>
-                  <p className="text-sm text-gray-600">
-                    Require additional authentication for sensitive account changes
-                  </p>
+                <div className="border-t pt-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="text-lg font-medium text-gray-900">Change Password</h3>
+                      <p className="text-sm text-gray-600">
+                        Change your account password to enhance security
+                      </p>
+                    </div>
+                    <button
+                      onClick={handleChangePassword}
+                      className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-800"
+                    >
+                      Change
+                    </button>
+                  </div>
                 </div>
-                <button
-                  onClick={() => {/* TODO: Toggle sensitive actions MFA 
-                  className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 ${mfaSettings?.mfaRequiredMfaForSensitiveActions ? 'bg-blue-600' : 'bg-gray-200'
-                    }`}
-                >
-                  <span
-                    className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${mfaSettings && mfaSettings.mfaRequiredMfaForSensitiveActions ? 'translate-x-5' : 'translate-x-0'
-                      }`}
-                  />
-                </button>
+
+                {/* Settings
+                <div className="border-t pt-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="text-lg font-medium text-gray-900">Require MFA for sensitive actions</h3>
+                      <p className="text-sm text-gray-600">
+                        Require additional authentication for sensitive account changes
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => { }}
+                      className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 
+                    ${mfaSettings?.mfaRequiredMfaForSensitiveActions ? 'bg-blue-600' : 'bg-gray-200'
+                        }`}
+                    >
+                      <span
+                        className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${mfaSettings && mfaSettings.mfaRequiredMfaForSensitiveActions ? 'translate-x-5' : 'translate-x-0'
+                          }`}
+                      />
+                    </button>
+                  </div>
+                </div> */}
               </div>
-            </div> */}
             </div>
           </div>
         </div>
-        { }
       </div>}
     </>
-  );
-};
+  )
+}
 
 export default MfaSettingsPage;

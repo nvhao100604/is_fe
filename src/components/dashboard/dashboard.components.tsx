@@ -104,8 +104,8 @@ const SideBar = ({
         <>
             {/* Mobile sidebar overlay */}
             {sidebarOpen && (
-                <div className="fixed inset-0 z-40 lg:hidden">
-                    <div className="fixed inset-0 bg-gray-600/50" onClick={setSidebarOpen} />
+                <div className="sticky inset-0 z-40 lg:hidden">
+                    <div className="sticky inset-0 bg-gray-600/50" onClick={setSidebarOpen} />
                 </div>
             )}
 

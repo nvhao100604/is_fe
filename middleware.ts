@@ -13,7 +13,6 @@ export function middleware(request: NextRequest) {
     '/auth/forgot-password',
     '/auth/verify-email',
     '/auth/oauth-callback',
-    '/dashboard'
   ];
 
   // If trying to access protected route without token

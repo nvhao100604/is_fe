@@ -89,6 +89,7 @@ api.interceptors.response.use(
             } catch (refreshError) {
                 processQueue(refreshError, null);
                 console.error("Session expired. Please log in again.");
+
                 clearAllKey();
 
                 return Promise.reject(refreshError);
