@@ -1,21 +1,36 @@
 'use client'
+import { tokenStorage } from "@/config/axios";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
-import { getCurrentUser, getMFASettings, login, logout, refreshAccessToken, updateMFASettings } from "@/redux/slices/authSlices";
+import { getCurrentUser, getMFASettings, login, logout, refreshAccessToken, setLoadedUser, updateMFASettings } from "@/redux/slices/authSlices";
 import { TOASTIFY_ERROR, TOASTIFY_SUCCESS, useToastify } from "@/store/Toastify";
 import { LoginRequestDTO } from "@/types/request/auth.request.dto";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 const useAuth = () => useAppSelector(state => state.auth)
 
 const useAuthAccount = () => {
     const auth = useAppSelector(state => state.auth)
     const dispatch = useAppDispatch()
+    const accessToken = tokenStorage.getToken()
+    const [token, setToken] = useState(accessToken)
 
     useEffect(() => {
-        if (auth.isAuthenticated && auth.accessTokens === null) dispatch(refreshAccessToken())
-        if (auth.accessTokens) dispatch(getCurrentUser())
-    }, [auth.accessTokens])
+        const refreshStoredToken = async () => {
+            const newToken = await tokenStorage.refreshToken();
+            setToken(newToken);
+        }
+        if (!auth.isAuthenticated) return;
+
+        if (!token && auth.isAuthenticated) {
+            refreshStoredToken()
+        }
+
+        if (auth.isAuthenticated && !auth.hasLoadedUser && accessToken) {
+            dispatch(getCurrentUser())
+        }
+    }, [auth.isAuthenticated, auth.hasLoadedUser, token])
+
     return auth
 }
 
@@ -33,7 +48,7 @@ const useLogin = () => {
                 toastify.notify("Authentication Error", TOASTIFY_ERROR)
             }
 
-            if (auth.accessTokens) {
+            if (auth.isAuthenticated) {
                 // dispatch(getCurrentUser())
                 toastify.notify("Authentication Successfully!", TOASTIFY_SUCCESS)
                 await new Promise(resolve => setTimeout(resolve, 2000))
@@ -42,7 +57,7 @@ const useLogin = () => {
             }
         }
         getUserData()
-    }, [auth.accessTokens])
+    }, [auth.isAuthenticated])
 
     return logIn
 }

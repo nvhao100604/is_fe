@@ -22,6 +22,7 @@ export interface AuthState {
     accessTokens: string | null;
     isAuthenticated: boolean;
     isLoading: boolean;
+    hasLoadedUser: boolean;
     errors: any,
     mfaSettings: MFASettingResponseDTO | null
 }
@@ -31,6 +32,7 @@ const initialState: AuthState = {
     accessTokens: null,
     isAuthenticated: getItemWithKey(IS_AUTHENTICATED),
     isLoading: false,
+    hasLoadedUser: false,
     errors: null,
     mfaSettings: null
 }
@@ -142,23 +144,26 @@ const authSlice = createSlice({
         },
         setAccessToken: (state, action: PayloadAction<string>) => {
             state.accessTokens = action.payload
+        },
+        setLoadedUser: (state) => {
+            state.hasLoadedUser = false
         }
+
     },
     extraReducers: (builder) => {
         builder
             .addCase(getCurrentUser.pending, (state) => {
-                state.isLoading = true
                 state.errors = null
             })
             .addCase(getCurrentUser.fulfilled, (state, action) => {
                 state.account = action.payload
-                state.isLoading = false
                 state.errors = null
+                state.hasLoadedUser = true
             })
             .addCase(getCurrentUser.rejected, (state, action) => {
                 state.account = tempAccount
-                state.isLoading = false
-                state.errors = action.payload
+                state.isAuthenticated = false
+                state.hasLoadedUser = true
             })
             .addCase(login.pending, (state) => {
                 state.isAuthenticated = false
@@ -170,7 +175,7 @@ const authSlice = createSlice({
                 // console.log("payload check: ", action.payload)
                 setItemWithKey(IS_AUTHENTICATED, true)
                 state.isLoading = false
-                state.accessTokens = action.payload
+                // state.accessTokens = action.payload
                 state.errors = null
             })
             .addCase(login.rejected, (state, action: PayloadAction<any>) => {
@@ -179,17 +184,14 @@ const authSlice = createSlice({
                 state.isLoading = false
             })
             .addCase(refreshAccessToken.pending, (state) => {
-                state.isLoading = true
                 state.errors = null
             })
             .addCase(refreshAccessToken.fulfilled, (state, action: PayloadAction<string>) => {
-                state.isLoading = false
                 state.errors = null
                 // console.log("after refresh token: " + action.payload)
-                state.accessTokens = action.payload
+                // state.accessTokens = action.payload
             })
             .addCase(refreshAccessToken.rejected, (state, action: PayloadAction<any>) => {
-                state.isLoading = false
                 state.errors = action.payload
             })
             .addCase(getMFASettings.pending, (state) => {
@@ -222,5 +224,5 @@ const authSlice = createSlice({
 
 // Action creators are generated for each case reducer function
 export { login, refreshAccessToken, getCurrentUser, getMFASettings, updateMFASettings, }
-export const { logout, incrementByAmount, setAccessToken } = authSlice.actions
+export const { logout, incrementByAmount, setAccessToken, setLoadedUser } = authSlice.actions
 export default authSlice.reducer

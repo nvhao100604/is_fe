@@ -1,4 +1,4 @@
-import api from "@/config/axios"
+import api, { tokenStorage } from "@/config/axios"
 import { LoginRequestDTO, PasswordVerify } from "@/types/request/auth.request.dto"
 import { EmailVerification } from "./mail.services"
 
@@ -6,7 +6,14 @@ const authLogIn = async (loginData: LoginRequestDTO): Promise<any> => {
   const response = await api.post("/auth/sign-in",
     loginData,
     { withCredentials: true })
-  // console.log("check login response: " + response.data)
+  console.log("check login response: " + response.data.data.token)
+  const accessToken = response.data.data.token;
+  tokenStorage.setToken(accessToken);
+  return response.data
+}
+
+const authLogout = async () => {
+  const response = await api.post("/auth/logout", {}, { withCredentials: true })
   return response.data
 }
 
@@ -39,4 +46,4 @@ const verifyEmail = async (emailVerify: EmailVerification): Promise<any> => {
   return response.data
 }
 
-export const authServices = { authLogIn, authGithubSignIn, getCurrentUser, verifyPassword, sendEmailNotificationVerify, verifyEmail }
+export const authServices = { authLogIn, authLogout, authGithubSignIn, getCurrentUser, verifyPassword, sendEmailNotificationVerify, verifyEmail }

@@ -14,7 +14,7 @@ const handleQuery = (query: Query) => {
 const QueryToParams = (query: Query): string => {
     const handledQuery = handleQuery(query)
     const queryString = new URLSearchParams(handledQuery as any).toString()
-    console.log("check query: ", queryString)
+    // console.log("check query: ", queryString)
 
     return queryString
 }

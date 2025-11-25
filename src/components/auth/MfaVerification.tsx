@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, use, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { mfaSettingServices } from '@/services/mfa-setting.service';
 import { authServices } from '@/services/auth.service';
@@ -6,6 +6,7 @@ import { EmailVerification, mailServices } from '@/services/mail.services';
 import { totpService, TOTPVerificationAuth } from '@/services/totp.service';
 import { TOASTIFY_ERROR, TOASTIFY_SUCCESS, useToastify } from '@/store/Toastify';
 import { backupCodeService, BackupCodeVerificationAuth } from '@/services/backupcode.service';
+import { is } from './../../../.next/static/chunks/node_modules_next_dist_shared_lib_2c2ec201._';
 
 // Types
 interface MfaSettings {
@@ -39,7 +40,7 @@ const MfaVerification: React.FC<MfaVerificationProps> = ({
   description,
   username
 }: MfaVerificationProps) => {
-  const router = useRouter();
+  // const router = useRouter();
   const [response, setResponse] = useState<any>();
   const [mfaSettings, setMfaSettings] = useState<MfaSettings | null>(null);
   const [currentMethod, setCurrentMethod] = useState<string>('');
@@ -47,14 +48,35 @@ const MfaVerification: React.FC<MfaVerificationProps> = ({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [availableMethods, setAvailableMethods] = useState<string[]>([]);
-    const toastify = useToastify();
+  const toastify = useToastify();
+  const [count, setCount] = useState(60);
+  const [isSending, setIsSending] = useState(false);
 
   const isLoginAction = action === 'login';
   const isForgotPasswordAction = action === 'password_reset';
+  const timerId = useRef<NodeJS.Timeout | number | null>(null)
 
   useEffect(() => {
     loadMfaSettings();
   }, []);
+
+  useEffect(() => {
+    if (isSending && count > 0) {
+      timerId.current = setInterval(() => setCount((prevCount) => prevCount - 1), 1000)
+    }
+
+    return () => clearInterval(timerId.current!);
+  }, [isSending])
+
+  useEffect(() => {
+    if (count <= 0) {
+      if (timerId.current !== null) {
+        clearInterval(timerId.current);
+        timerId.current = null;
+      }
+      setIsSending(false);
+    }
+  }, [count, setIsSending]);
 
   // ========================================
   // LOAD MFA SETTINGS & SEND INITIAL EMAIL
@@ -71,7 +93,7 @@ const MfaVerification: React.FC<MfaVerificationProps> = ({
           // await mailServices.sendVerificationDevice(formVerify);
           console.log('TODO: Send device verification email for login:', formVerify);
         }
-      } 
+      }
       else {
         // FOR OTHER ACTIONS: Send notification email
         //await authServices.sendEmailNotificationVerify();
@@ -86,10 +108,11 @@ const MfaVerification: React.FC<MfaVerificationProps> = ({
       if (response.success) {
         setMfaSettings(response.data);
         setCurrentMethod(response.data.mfaPrimaryMethod);
-        if(response.data.mfaPrimaryMethod === 'EMAIL'){
-          if(isLoginAction || isForgotPasswordAction){
+        if (response.data.mfaPrimaryMethod === 'EMAIL') {
+          setIsSending(true)
+          if (isLoginAction || isForgotPasswordAction) {
             await mailServices.emailRequireAuth(username!);
-          }else{
+          } else {
             await authServices.sendEmailNotificationVerify();
           }
         }
@@ -122,7 +145,7 @@ const MfaVerification: React.FC<MfaVerificationProps> = ({
     // Add fallback methods (NOT for login)
     if (!(isLogin || isForgotPasswordAction)) {
       methods.push('PASSWORD');
-    }else{
+    } else {
       methods.push('BACKUP_CODES');
     }
 
@@ -143,18 +166,18 @@ const MfaVerification: React.FC<MfaVerificationProps> = ({
         case 'EMAIL':
           const emailResponse = await handleEmailVerification();
           setResponse(emailResponse)
-          if(emailResponse && emailResponse.success) {
-              if(action === 'login'){ 
-                //localStorage.setItem('accessToken', emailResponse.token);
-                // localStorage.setItem('refreshToken', emailResponse.refreshToken);
-                //document.cookie = `accessToken=${emailResponse.token}; Path=/; SameSite=Strict`;
-              }else{
-                // For non-login actions, just call onSuccess
-                console.log("Email verification success for non-login action");
-                if(emailResponse.success){
-                  onSuccess();
-                }
+          if (emailResponse && emailResponse.success) {
+            if (action === 'login') {
+              //localStorage.setItem('accessToken', emailResponse.token);
+              // localStorage.setItem('refreshToken', emailResponse.refreshToken);
+              //document.cookie = `accessToken=${emailResponse.token}; Path=/; SameSite=Strict`;
+            } else {
+              // For non-login actions, just call onSuccess
+              console.log("Email verification success for non-login action");
+              if (emailResponse.success) {
+                onSuccess();
               }
+            }
           }
           break;
 
@@ -162,17 +185,17 @@ const MfaVerification: React.FC<MfaVerificationProps> = ({
         case 'AUTHENTICATOR_APP':
           const authResponse = await handleTOTPVerification();
           setResponse(authResponse)
-          if(authResponse && authResponse.success) {
-            if(isLoginAction){
+          if (authResponse && authResponse.success) {
+            if (isLoginAction) {
 
-            }else if(isForgotPasswordAction){
-              toastify.notify('Success. Now you can to change password',TOASTIFY_SUCCESS );
-            }else{
+            } else if (isForgotPasswordAction) {
+              toastify.notify('Success. Now you can to change password', TOASTIFY_SUCCESS);
+            } else {
 
             }
             onSuccess();
-          }else{
-            toastify.notify(authResponse?.message || 'TOTP code is incorrect', TOASTIFY_ERROR );
+          } else {
+            toastify.notify(authResponse?.message || 'TOTP code is incorrect', TOASTIFY_ERROR);
           }
           break;
 
@@ -185,16 +208,16 @@ const MfaVerification: React.FC<MfaVerificationProps> = ({
           const backUpResponse = await handleBackupCodeVerification();
           setResponse(backUpResponse)
           if (backUpResponse && backUpResponse.success) {
-            if(isLoginAction){
+            if (isLoginAction) {
 
-            }else if(isForgotPasswordAction){
-              toastify.notify('Success. Now you can to change password',TOASTIFY_SUCCESS );
-            }else{
+            } else if (isForgotPasswordAction) {
+              toastify.notify('Success. Now you can to change password', TOASTIFY_SUCCESS);
+            } else {
 
             }
             onSuccess();
-          }else{
-            toastify.notify(backUpResponse?.message || 'Backup code is incorrect', TOASTIFY_ERROR );
+          } else {
+            toastify.notify(backUpResponse?.message || 'Backup code is incorrect', TOASTIFY_ERROR);
           }
           break;
 
@@ -203,10 +226,10 @@ const MfaVerification: React.FC<MfaVerificationProps> = ({
           console.log("pwd res check:", pwdResponse)
           setResponse(pwdResponse)
           if (pwdResponse && pwdResponse.success) {
-            toastify.notify('Password verified successfully', TOASTIFY_SUCCESS );
+            toastify.notify('Password verified successfully', TOASTIFY_SUCCESS);
             onSuccess();
           } else {
-            toastify.notify(pwdResponse?.message || 'Password verification failed', TOASTIFY_ERROR );
+            toastify.notify(pwdResponse?.message || 'Password verification failed', TOASTIFY_ERROR);
             setError(pwdResponse?.message || 'Password verification failed');
           }
           break;
@@ -242,17 +265,17 @@ const MfaVerification: React.FC<MfaVerificationProps> = ({
     if (isLoginAction || isForgotPasswordAction) {
       // TODO: API CALL - Login email verification
       const payload: EmailVerification = {
-        email: username! ,
+        email: username!,
         otp: verificationCode,
       };
-      const ressponse =  await mailServices.emailVerifyAuth(payload);
-        if(ressponse && ressponse.success) {
-                if(ressponse.data) {
-                  return { success: true, data: true };
-                } else {
-                  return { success: false, message: 'Incorrect email code' };
-                }
-              }
+      const ressponse = await mailServices.emailVerifyAuth(payload);
+      if (ressponse && ressponse.success) {
+        if (ressponse.data) {
+          return { success: true, data: true };
+        } else {
+          return { success: false, message: 'Incorrect email code' };
+        }
+      }
     } else {
       const payload: EmailVerification = {
         email: null,
@@ -261,8 +284,8 @@ const MfaVerification: React.FC<MfaVerificationProps> = ({
       console.log('TODO: General email verification:', payload);
       const ressponse = await authServices.verifyEmail(payload);
       console.log('Email verification response:', ressponse);
-      if(ressponse && ressponse.success) {
-        if(ressponse.data) {
+      if (ressponse && ressponse.success) {
+        if (ressponse.data) {
           return { success: true, data: true };
         } else {
           return { success: false, message: 'Incorrect email code' };
@@ -281,13 +304,13 @@ const MfaVerification: React.FC<MfaVerificationProps> = ({
         email: username!,
         otp: verificationCode,
       };
-      const ressponse =  await totpService.verifyTotpAuth(payload);
+      const ressponse = await totpService.verifyTotpAuth(payload);
 
-      if(ressponse && ressponse.success) {
-        if(ressponse.data) {
+      if (ressponse && ressponse.success) {
+        if (ressponse.data) {
           return { success: true, data: true };
         } else {
-          return { success: false, message: 'Incorrect TOTP code'};
+          return { success: false, message: 'Incorrect TOTP code' };
         }
       }
     } else {
@@ -337,12 +360,12 @@ const MfaVerification: React.FC<MfaVerificationProps> = ({
         email: username!,
         code: verificationCode,
       }
-      const ressponse =  await backupCodeService.verifyCodeAuth(payload);
-      if(ressponse && ressponse.success) {
-        if(ressponse.data) {
+      const ressponse = await backupCodeService.verifyCodeAuth(payload);
+      if (ressponse && ressponse.success) {
+        if (ressponse.data) {
           return { success: true, data: true };
         } else {
-          return { success: false, message: 'Incorrect backup code'};
+          return { success: false, message: 'Incorrect backup code' };
         }
       }
     }
@@ -396,23 +419,24 @@ const MfaVerification: React.FC<MfaVerificationProps> = ({
   // SEND EMAIL CODE (Resend)
   // ========================================
   const sendEmailCode = async () => {
-    try {
-      setLoading(true);
-      setError(null);
+    console.log("send email code called")
+    // try {
+    //   setLoading(true);
+    //   setError(null);
 
-      if(isLoginAction || isForgotPasswordAction){
-            await mailServices.emailRequireAuth(username!);
-          }else{
-            await authServices.sendEmailNotificationVerify();
-          }
-          toastify.notify('Verification code sent to your email', TOASTIFY_SUCCESS );
+    //   if (isLoginAction || isForgotPasswordAction) {
+    //     await mailServices.emailRequireAuth(username!);
+    //   } else {
+    //     await authServices.sendEmailNotificationVerify();
+    //   }
+    //   toastify.notify('Verification code sent to your email', TOASTIFY_SUCCESS);
 
-    } catch (err) {
-      setError('Failed to send email code');
-      console.error('Send email error:', err);
-    } finally {
-      setLoading(false);
-    }
+    // } catch (err) {
+    //   setError('Failed to send email code');
+    //   console.error('Send email error:', err);
+    // } finally {
+    //   setLoading(false);
+    // }
   };
 
   // ========================================
@@ -425,7 +449,7 @@ const MfaVerification: React.FC<MfaVerificationProps> = ({
 
       if (response.success) {
         if (isLoginAction && response.token) {
-          localStorage.setItem('accessToken', response.token);
+          // localStorage.setItem('accessToken', response.token);
           // localStorage.setItem('refreshToken', response.refreshToken);
           document.cookie = `accessToken=${response.token}; Path=/; SameSite=Strict`;
         }
@@ -667,7 +691,7 @@ const MfaVerification: React.FC<MfaVerificationProps> = ({
                 disabled={loading || !verificationCode || verificationCode.length < 6}
                 className="w-full mt-4 flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-amber-600 hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 disabled:opacity-50"
               >
-                {loading ? 'Verifying...' : 'Verify with Password'}
+                {loading ? `Verifying...` : 'Verify with Password'}
               </button>
             </>
           ) : (
@@ -686,7 +710,7 @@ const MfaVerification: React.FC<MfaVerificationProps> = ({
                 disabled={loading || !verificationCode || (currentMethod !== 'BACKUP_CODES' && verificationCode.length !== 6) || (currentMethod === 'BACKUP_CODES' && verificationCode.length !== 8)}
                 className="w-full mt-4 flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
               >
-                {loading ? 'Verifying...' : 'Verify'}
+                {loading ? `Verifying...` : 'Verify'}
               </button>
             </>
           )}
@@ -734,9 +758,10 @@ const MfaVerification: React.FC<MfaVerificationProps> = ({
             <button
               onClick={sendEmailCode}
               className="text-sm text-blue-600 hover:text-blue-800"
-              disabled={loading}
+              disabled={isSending}
             >
               Resend email code
+              <span className=''>{isSending ? ` in (${count}s)` : ''}</span>
             </button>
           </div>
         )}

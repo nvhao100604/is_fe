@@ -1,11 +1,13 @@
 import { SecurityDashboard } from "@/components/dashboard/dashboard.components"
 import ProtectedProvider from "@/components/providers/ProtectedProvider"
-import { cookies } from "next/headers"
+// import { cookies } from "next/headers"
 
 const DashBoardIndex = async () => {
-    const tokens = await cookies()
-    const token = tokens.get("refreshToken")?.value
-    console.log(token)
+    // const tokens = await cookies()
+    // const token = tokens.get("refreshToken")?.value
+    // console.log(token)
+    // const auth = useAuth();
+
     return (
         <ProtectedProvider>
             <SecurityDashboard />

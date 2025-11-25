@@ -23,9 +23,9 @@ export default function TrustDevicesDashboard() {
     try {
       setLoading(true)
       setError(null)
-      console.log("Check filters: ", filters)
+      // console.log("Check filters: ", filters)
       const response = await trustDeviceServices.getTrustDeviceByFilter(filters, { responseDelay: 0 })
-      console.log(response)
+      // console.log(response)
       if (response.success) {
         setData(response.data)
       } else {
@@ -39,8 +39,8 @@ export default function TrustDevicesDashboard() {
   }
 
   const handleChangeData = (e: any) => {
-    console.log("check type: ", e.target.type)
-    console.log("check value type: ", typeof e.target.value)
+    // console.log("check type: ", e.target.type)
+    // console.log("check value type: ", typeof e.target.value)
     setFilters((prev) => ({
       ...prev,
       [e.target.name]: (e.target.type === "date") ? FormatDate(e.target.value) : e.target.value
@@ -79,7 +79,8 @@ export default function TrustDevicesDashboard() {
       setLoading(true);
       const response = await trustDeviceServices.deleteTrustDevice(trustDeviceId);
       if (response.success) {
-        console.log("Delete success:", response);
+        console.log("Delete success:", response.data);
+        setData(response.data)
       } else {
         setError(response.errors);
       }
@@ -88,7 +89,7 @@ export default function TrustDevicesDashboard() {
     } finally {
       setLoading(false);
     }
-  };  
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-blue-50 p-6">

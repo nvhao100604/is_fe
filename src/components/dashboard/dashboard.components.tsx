@@ -104,8 +104,8 @@ const SideBar = ({
         <>
             {/* Mobile sidebar overlay */}
             {sidebarOpen && (
-                <div className="sticky inset-0 z-40 lg:hidden">
-                    <div className="sticky inset-0 bg-gray-600/50" onClick={setSidebarOpen} />
+                <div className="fixed inset-0 z-40 lg:hidden">
+                    <div className="fixed inset-0 bg-gray-600/50" onClick={setSidebarOpen} />
                 </div>
             )}
 
@@ -246,7 +246,7 @@ const SecurityDashboard = () => {
     };
 
     return (
-        <div className={`min-h-screen text-gray-800"}`}>
+        <div className={`min-h-screen text-gray-800`}>
             <div className="container mx-auto px-4 py-8">
                 <div className="flex justify-between items-center mb-8">
                     <h1 className="text-3xl font-bold">Security Dashboard</h1>
