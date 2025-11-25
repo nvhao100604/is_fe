@@ -15,7 +15,7 @@ export const OTPVerification: React.FC<OTPVerificationProps> = ({ email, onResen
   const router = useRouter();
   // const { loading, error, execute } = useApi();
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
-  const [timeLeft, setTimeLeft] = useState(10); // 5 minutes
+  const [timeLeft, setTimeLeft] = useState(60); // 5 minutes
   const [canResend, setCanResend] = useState(false);
   const [isLoading, setIsLoading] = useState(false)
   const toastify = useToastify()
@@ -64,26 +64,31 @@ export const OTPVerification: React.FC<OTPVerificationProps> = ({ email, onResen
     const email = localStorage.getItem("verify_email") ?? ''
     const verifyForm = { email: email, otp: otp.toString().replace(/,/g, "") }
     const response = await mailServices.verifySignUp(verifyForm)
-    localStorage.removeItem("verify_email")
+    console.log("OTP Verification Response: ", response)
     if (response.success) {
-
-      router.push('/auth/login?message=Email verified successfully');
+      if (response.data.success) {
+        toastify.notify("Email verified successfully", TOASTIFY_SUCCESS)
+        localStorage.removeItem("verify_email")
+        router.push('/auth/login?message=Email verified successfully');
+      } else {
+        toastify.notify(response.data.message || "Verification failed. Please try again.", TOASTIFY_ERROR)
+      }
     } else {
       toastify.notify("Verification Error", TOASTIFY_ERROR)
     }
   };
 
   const handleResend = async () => {
-      setCanResend(false);
-      setOtp(['', '', '', '', '', '']);
-      const emailLocal = localStorage.getItem("verify_email") ?? ''
-      const email: EmailResendOTP = { email: emailLocal }
-      const response = await mailServices.sendVerificationEmail(email)
-      if (response.success) {
-        toastify.notify("OTP sent successfully", TOASTIFY_INFO)
-      } else {
-        toastify.notify("Resend OTP Error. Please try again later.", TOASTIFY_ERROR)
-      }
+    setCanResend(false);
+    setOtp(['', '', '', '', '', '']);
+    const emailLocal = localStorage.getItem("verify_email") ?? ''
+    const email: EmailResendOTP = { email: emailLocal }
+    const response = await mailServices.sendVerificationEmail(email)
+    if (response.success) {
+      toastify.notify("OTP sent successfully", TOASTIFY_INFO)
+    } else {
+      toastify.notify("Resend OTP Error. Please try again later.", TOASTIFY_ERROR)
+    }
   };
 
   const formatTime = (seconds: number) => {
@@ -158,7 +163,10 @@ export const OTPVerification: React.FC<OTPVerificationProps> = ({ email, onResen
           <p className="text-sm text-gray-600">
             Wrong email address?{' '}
             <button
-              onClick={() => router.back()}
+              onClick={() => {
+                localStorage.removeItem("verify_email");
+                router.back()
+              }}
               className="text-blue-600 hover:text-blue-800 font-medium"
             >
               Go back
