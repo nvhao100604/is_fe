@@ -85,6 +85,8 @@ const processQueue = (error: any, token = null) => {
 const handleTokenExpired = async () => {
     try {
         // Gọi API logout nếu có
+        tokenStorage.clearToken();
+        delete api.defaults.headers.common['Authorization'];
         const token = tokenStorage.getToken();
         if (token) {
             try {
@@ -100,6 +102,7 @@ const handleTokenExpired = async () => {
         clearAllKey();
         if (storeDispatch) {
             storeDispatch(logout());
+            tokenStorage.clearToken()
         }
 
         // Redirect về trang login (nếu cần)
@@ -120,8 +123,8 @@ const handleRefreshToken = async (originalRequest: any): Promise<any> => {
         console.log('Token refreshed successfully: ', newAccessToken);
         tokenStorage.setToken(newAccessToken);
 
-        api.defaults.headers.common['Authorization'] = `Bearer ${newAccessToken}`;
-        originalRequest.headers['Authorization'] = `Bearer ${newAccessToken}`;
+        // api.defaults.headers.common['Authorization'] = `Bearer ${newAccessToken}`;
+        // originalRequest.headers['Authorization'] = `Bearer ${newAccessToken}`;
         processQueue(null, newAccessToken);
         return api(originalRequest);
 

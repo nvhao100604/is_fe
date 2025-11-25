@@ -17,6 +17,7 @@ const useAuthAccount = () => {
 
     useEffect(() => {
         const refreshStoredToken = async () => {
+            tokenStorage.clearToken()
             const newToken = await tokenStorage.refreshToken();
             setToken(newToken);
         }

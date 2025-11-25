@@ -7,14 +7,15 @@ const ExpiredModal = () => {
     const HandleReturnLogin = () => {
         navigation.push('/auth/login')
     }
+
     return (
         <Modal handleClick={HandleReturnLogin}>
-            <div className="flex-col gap-2">
+            <div className="flex flex-col gap-4 py-4 px-2 items-center text-xl">
                 <span>Session expired. Please log in again.</span>
                 <button
-                    className="p-2 bg-red-500"
+                    className="py-2 px-3 bg-red-500 rounded-2xl text-white hover:bg-red-700"
                     onClick={HandleReturnLogin}
-                >Login</button>
+                >Login again</button>
             </div>
         </Modal>
     )
