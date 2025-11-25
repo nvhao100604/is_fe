@@ -1,12 +1,10 @@
 import React, { useState, useEffect, use, useRef } from 'react';
-import { useRouter } from 'next/navigation';
 import { mfaSettingServices } from '@/services/mfa-setting.service';
 import { authServices } from '@/services/auth.service';
 import { EmailVerification, mailServices } from '@/services/mail.services';
 import { totpService, TOTPVerificationAuth } from '@/services/totp.service';
 import { TOASTIFY_ERROR, TOASTIFY_SUCCESS, useToastify } from '@/store/Toastify';
 import { backupCodeService, BackupCodeVerificationAuth } from '@/services/backupcode.service';
-import { is } from './../../../.next/static/chunks/node_modules_next_dist_shared_lib_2c2ec201._';
 
 // Types
 interface MfaSettings {
